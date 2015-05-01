@@ -1,0 +1,24 @@
+{
+  "name": "koco-content-management",
+  "version": "0.1.0",
+  "homepage": "https://github.com/cbcrc/koco-content-management",
+  "authors": [
+    "Maxime Séguin <maxime.forget-seguin@radio-canada.ca>"
+  ],
+  "description": "A set of utilities to help build a CMS",
+  "moduleType": [
+    "amd"
+  ],
+  "keywords": [
+    "koco",
+    "cms"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
