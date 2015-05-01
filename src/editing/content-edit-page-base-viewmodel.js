@@ -4,7 +4,6 @@
 define([
         'knockout',
         'jquery',
-        'configs',
         'lodash',
         'knockout-mapping-utilities',
         'url-utilities',
@@ -16,20 +15,19 @@ define([
         'knockout-validation-utilities',
         'knockout-disposer'
     ],
-    function(ko, $, configs, _, koMappingUtilities, urlUtilities, router,
+    function(ko, $, _, koMappingUtilities, urlUtilities, router,
         toastr, modaler, arrayUtilities, tinymceUtilities, koValidationUtilities, KoDisposer) {
         'use strict';
 
         var confirmationMessage = 'Si vous quitter cette page, vos changements seront perdus.';
 
-        var ContentEditPageViewModel = function(api, apiResourceName, createPageTitle, observableContent,
+        var ContentEditPageViewModel = function(api, apiResourceName, observableContent,
             tinyMcePropertyNames, observableValueObjects, alikeArraysPropertyNames) {
             var self = this;
             self.api = api;
 
             self.koDisposer = new KoDisposer();
 
-            self.createPageTitle = ko.observable(createPageTitle);
             self.observableValueObjects = observableValueObjects || [];
 
             self.observableContent = ko.validatedObservable(observableContent);
