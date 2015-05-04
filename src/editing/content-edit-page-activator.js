@@ -5,13 +5,13 @@ define(['knockout', 'jquery'],
     function(ko, $) {
         'use strict';
 
-        var EditPageActivator = function(viewmodel) {
+        var ContentEditPageActivator = function(viewmodel) {
             var self = this;
 
             self.viewmodel = viewmodel;
         };
 
-        EditPageActivator.prototype.activate = function(context) {
+        ContentEditPageActivator.prototype.activate = function(context) {
             var self = this;
 
             return new $.Deferred(function(dfd) {
@@ -42,5 +42,5 @@ define(['knockout', 'jquery'],
             }).promise();
         };
 
-        return EditPageActivator;
+        return ContentEditPageActivator;
     });

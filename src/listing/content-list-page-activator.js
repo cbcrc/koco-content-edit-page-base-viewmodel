@@ -5,13 +5,13 @@ define(['knockout', 'jquery'],
     function(ko, $) {
         'use strict';
 
-        var ListPageActivator = function(viewmodel) {
+        var ContentListPageActivator = function(viewmodel) {
             var self = this;
 
             self.viewmodel = viewmodel;
         };
 
-        ListPageActivator.prototype.activate = function(context) {
+        ContentListPageActivator.prototype.activate = function(context) {
             var self = this;
 
             return new $.Deferred(function(dfd) {
@@ -43,5 +43,5 @@ define(['knockout', 'jquery'],
             }).promise();
         };
 
-        return ListPageActivator;
+        return ContentListPageActivator;
     });

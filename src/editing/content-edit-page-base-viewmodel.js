@@ -5,30 +5,49 @@ define([
         'knockout',
         'jquery',
         'lodash',
-        'knockout-mapping-utilities',
+        'mapping-utilities',
         'url-utilities',
         'router',
         'toastr',
         'modaler',
         'array-utilities',
-        'tinymce-utilities',
-        'knockout-validation-utilities',
-        'knockout-disposer'
+        'validation-utilities',
+        'disposer'
     ],
-    function(ko, $, _, koMappingUtilities, urlUtilities, router,
-        toastr, modaler, arrayUtilities, tinymceUtilities, koValidationUtilities, KoDisposer) {
+    function(ko, $, _, mappingUtilities, urlUtilities, router,
+        toastr, modaler, arrayUtilities, validationUtilities, disposer) {
         'use strict';
 
-        var confirmationMessage = 'Si vous quitter cette page, vos changements seront perdus.';
+        var defaultSettings = {
+            tinyMcePropertyNames: [],
+            observableValueObjects: [],
+            alikeArraysPropertyNames: [],
+            quitConfirmMessage: 'Si vous quitter cette page, vos changements seront perdus.',
+            contentCreatedMessage: 'Le contenu a été sauvegardé.',
+            contentUpdatedMessage: 'Le contenu a été sauvegardé.',
+            validationErrorsMessage: 'Le formulaire comporte des erreurs. Veuillez les corriger.'
+        };
 
-        var ContentEditPageViewModel = function(api, apiResourceName, observableContent,
-            tinyMcePropertyNames, observableValueObjects, alikeArraysPropertyNames) {
+        var ContentEditPageBaseViewModel = function(api, apiResourceName, observableContent, settings) {
             var self = this;
+
+            if (!api) {
+                throw new Error('ContentEditPageBaseViewModel - missing api');
+            }
+
+            if (!apiResourceName) {
+                throw new Error('ContentEditPageBaseViewModel - missing api resource name');
+            }
+
+            if (!observableContent) {
+                throw new Error('ContentEditPageBaseViewModel - missing api observable content');
+            }
+
+            self.settings = $.extend({}, defaultSettings, settings);
+
             self.api = api;
 
-            self.koDisposer = new KoDisposer();
-
-            self.observableValueObjects = observableValueObjects || [];
+            self.disposer = new disposer();
 
             self.observableContent = ko.validatedObservable(observableContent);
             self.observableContent.extend({
@@ -38,25 +57,23 @@ define([
             self.originalModelSnapshot = ko.observable();
 
             self.apiResourceName = apiResourceName;
-            self.tinyMcePropertyNames = tinyMcePropertyNames || [];
-            self.alikeArraysPropertyNames = alikeArraysPropertyNames || [];
 
             self.validatedObservables = [self.observableContent];
 
             self.editMode = ko.pureComputed(function() {
                 return self.observableContent().id() ? 'update' : 'create';
             });
-            self.koDisposer.add(self.editMode);
+            self.disposer.add(self.editMode);
 
             self.serverSideValidationErrors = ko.observableArray([]);
 
             self.content = ko.pureComputed(function() {
-                return koMappingUtilities.toJS(self.observableContent);
+                return mappingUtilities.toJS(self.observableContent);
             });
-            self.koDisposer.add(self.content);
+            self.disposer.add(self.content);
         };
 
-        ContentEditPageViewModel.prototype.canNavigate = function() {
+        ContentEditPageBaseViewModel.prototype.canNavigate = function() {
             var self = this;
 
             if (self.isChangesWillBeLostConfirmationDisabled) {
@@ -68,12 +85,12 @@ define([
             }
 
             return modaler.show('confirm', {
-                message: confirmationMessage,
+                message: self.settings.quitConfirmMessage,
                 okButtonHtml: 'Quitter'
             });
         };
 
-        ContentEditPageViewModel.prototype.onBeforeUnload = function() {
+        ContentEditPageBaseViewModel.prototype.onBeforeUnload = function() {
             var self = this;
 
             if (self.isChangesWillBeLostConfirmationDisabled) {
@@ -84,10 +101,10 @@ define([
                 return;
             }
 
-            return confirmationMessage;
+            return self.settings.quitConfirmMessage;
         };
 
-        ContentEditPageViewModel.prototype.save = function(options) {
+        ContentEditPageBaseViewModel.prototype.save = function(options) {
             var self = this;
 
             var promise = new $.Deferred(function(dfd) {
@@ -111,36 +128,36 @@ define([
             return promise;
         };
 
-        ContentEditPageViewModel.prototype.validate = function() {
+        ContentEditPageBaseViewModel.prototype.validate = function() {
             var self = this;
 
-            return koValidationUtilities.validateObservables(self.validatedObservables);
+            return validationUtilities.validateObservables(self.validatedObservables);
         };
 
-        ContentEditPageViewModel.prototype.toOutputModel = function(saveOptions) {
+        ContentEditPageBaseViewModel.prototype.toOutputModel = function(saveOptions) {
             var self = this;
 
-            var content = koMappingUtilities.toJS(self.observableContent);
+            var content = mappingUtilities.toJS(self.observableContent);
 
             return content;
         };
 
-        ContentEditPageViewModel.prototype.hasModelChanged = function() {
+        ContentEditPageBaseViewModel.prototype.hasModelChanged = function() {
             var self = this;
 
             return self.isEqual(
                 self.originalModelSnapshot(),
                 self.takeCurrentModelSnapshot(),
-                self.tinyMcePropertyNames,
-                self.alikeArraysPropertyNames
+                self.settings.tinyMcePropertyNames,
+                self.settings.alikeArraysPropertyNames
             ) === false;
         };
 
-        ContentEditPageViewModel.prototype.isEqual = function(object, other, htmlPropertyNames, alikeArraysPropertyNames) {
+        ContentEditPageBaseViewModel.prototype.isEqual = function(object, other, htmlPropertyNames, alikeArraysPropertyNames) {
             var self = this;
 
-            object = koMappingUtilities.toJS(object);
-            other = koMappingUtilities.toJS(other);
+            object = mappingUtilities.toJS(object);
+            other = mappingUtilities.toJS(other);
 
             if (_.isObject(object) && _.isObject(other)) {
                 var hasHtmlPropertyNames = arrayUtilities.isNotEmptyArray(htmlPropertyNames);
@@ -152,7 +169,7 @@ define([
             }
         };
 
-        ContentEditPageViewModel.prototype.isEqualObject = function(object, other, htmlPropertyNames, alikeArraysPropertyNames, hasHtmlPropertyNames, hasAlikeArraysPropertyNames) {
+        ContentEditPageBaseViewModel.prototype.isEqualObject = function(object, other, htmlPropertyNames, alikeArraysPropertyNames, hasHtmlPropertyNames, hasAlikeArraysPropertyNames) {
             var self = this;
             var propertiesEqual;
 
@@ -177,7 +194,7 @@ define([
             return true;
         };
 
-        ContentEditPageViewModel.prototype.isEqualProperty = function(key, object, other, htmlPropertyNames, alikeArraysPropertyNames, hasHtmlPropertyNames, hasAlikeArraysPropertyNames) {
+        ContentEditPageBaseViewModel.prototype.isEqualProperty = function(key, object, other, htmlPropertyNames, alikeArraysPropertyNames, hasHtmlPropertyNames, hasAlikeArraysPropertyNames) {
             var self = this;
             var val1 = object[key];
             var val2 = other[key];
@@ -233,36 +250,51 @@ define([
             return _.isEqual(val1, val2);
         };
 
-        ContentEditPageViewModel.prototype.takeCurrentModelSnapshot = function() {
+        ContentEditPageBaseViewModel.prototype.takeCurrentModelSnapshot = function() {
             var self = this;
             var modelSnapshot = self.getModelSnapshot();
 
-            for (var i = 0; i < self.tinyMcePropertyNames.length; i++) {
-                var propertyName = self.tinyMcePropertyNames[i];
+            for (var i = 0; i < self.settings.tinyMcePropertyNames.length; i++) {
+                var propertyName = self.settings.tinyMcePropertyNames[i];
 
                 if (modelSnapshot.hasOwnProperty(propertyName)) {
-                    modelSnapshot[propertyName] = tinymceUtilities.clearContentFromTinyMceSpecificMarkup(modelSnapshot[propertyName]);
+                    modelSnapshot[propertyName] = self.clearContentFromTinyMceSpecificMarkup(modelSnapshot[propertyName]);
                 }
             }
 
             return modelSnapshot;
         };
 
-        ContentEditPageViewModel.prototype.takeOriginalModelSnapshot = function() {
+        ContentEditPageBaseViewModel.prototype.clearContentFromTinyMceSpecificMarkup = function(tinymceContnet) {
+            //var self = this;
+
+            var $buffer = $('<div>');
+            $buffer.html(tinymceContnet);
+            $buffer.find('.articleBody').removeClass('articleBody');
+            $buffer.find('.first').removeClass('first');
+            $buffer.find('[itemprop]').removeAttr('itemprop');
+            $buffer.find('*[class=""]').removeAttr('class');
+
+            var result = $buffer.html();
+
+            return result;
+        };
+
+        ContentEditPageBaseViewModel.prototype.takeOriginalModelSnapshot = function() {
             var self = this;
 
             self.originalModelSnapshot(self.takeCurrentModelSnapshot());
         };
 
-        ContentEditPageViewModel.prototype.getModelSnapshot = function() {
+        ContentEditPageBaseViewModel.prototype.getModelSnapshot = function() {
             var self = this;
 
-            var modelSnapshot = koMappingUtilities.toJS(self.observableContent);
+            var modelSnapshot = mappingUtilities.toJS(self.observableContent);
 
             return modelSnapshot;
         };
 
-        ContentEditPageViewModel.prototype.loadContent = function(id, dfd) {
+        ContentEditPageBaseViewModel.prototype.loadContent = function(id, dfd) {
             var self = this;
 
             if (dfd) {
@@ -280,21 +312,21 @@ define([
             }).promise();
         };
 
-        ContentEditPageViewModel.prototype.loadLookups = function() {
+        ContentEditPageBaseViewModel.prototype.loadLookups = function() {
             return new $.Deferred().resolve().promise();
         };
 
-        ContentEditPageViewModel.prototype.afterContentLoaded = function() {
+        ContentEditPageBaseViewModel.prototype.afterContentLoaded = function() {
             return new $.Deferred().resolve().promise();
         };
 
-        ContentEditPageViewModel.prototype.onContentLoaded = function(content) {
+        ContentEditPageBaseViewModel.prototype.onContentLoaded = function(content) {
             var self = this;
 
             var adaptedContentFromServer = self.fromInputModel(content);
 
             var mapping = {};
-            koMappingUtilities.mapAsObservableValueObjects(mapping, self.observableValueObjects);
+            mappingUtilities.mapAsObservableValueObjects(mapping, self.settings.observableValueObjects);
 
             ko.mapping.fromJS(adaptedContentFromServer, mapping, self.observableContent);
 
@@ -303,11 +335,11 @@ define([
             return new $.Deferred().resolve().promise();
         };
 
-        ContentEditPageViewModel.prototype.fromInputModel = function(inputModel) {
+        ContentEditPageBaseViewModel.prototype.fromInputModel = function(inputModel) {
             return inputModel;
         };
 
-        ContentEditPageViewModel.prototype.reload = function(id, dfd) {
+        ContentEditPageBaseViewModel.prototype.reload = function(id, dfd) {
             var self = this;
 
             self.loadContent(id, dfd).then(function() {
@@ -336,7 +368,7 @@ define([
             });
         };
 
-        ContentEditPageViewModel.prototype.create = function(writeModel, dfd) {
+        ContentEditPageBaseViewModel.prototype.create = function(writeModel, dfd) {
             var self = this;
 
             self.api.postJson(self.apiResourceName, writeModel)
@@ -348,7 +380,7 @@ define([
                 });
         };
 
-        ContentEditPageViewModel.prototype.update = function(writeModel, dfd) {
+        ContentEditPageBaseViewModel.prototype.update = function(writeModel, dfd) {
             var self = this;
             var id = self.observableContent().id();
 
@@ -361,16 +393,16 @@ define([
                 });
         };
 
-        ContentEditPageViewModel.prototype.onCreateSuccess = function(dfd, id) {
+        ContentEditPageBaseViewModel.prototype.onCreateSuccess = function(dfd, id) {
             var self = this;
 
             self.isChangesWillBeLostConfirmationDisabled = true;
-            toastr.success('Le contenu a été sauvegardé.');
+            toastr.success(self.settings.contentCreatedMessage);
 
             self.reload(id, dfd);
         };
 
-        ContentEditPageViewModel.prototype.onUpdateFail = function(dfd, writeModel, id, jqXhr, textStatus, errorThrown) {
+        ContentEditPageBaseViewModel.prototype.onUpdateFail = function(dfd, writeModel, id, jqXhr, textStatus, errorThrown) {
             var self = this;
 
             switch (jqXhr.status) {
@@ -390,7 +422,7 @@ define([
             }
         };
 
-        ContentEditPageViewModel.prototype.onCreateFail = function(dfd, jqXhr, textStatus, errorThrown) {
+        ContentEditPageBaseViewModel.prototype.onCreateFail = function(dfd, jqXhr, textStatus, errorThrown) {
             var self = this;
 
             switch (jqXhr.status) {
@@ -409,21 +441,20 @@ define([
             }
         };
 
-        ContentEditPageViewModel.prototype.handleUnknownError = function(jqXhr, textStatus, errorThrown) {
-        };
+        ContentEditPageBaseViewModel.prototype.handleUnknownError = function(jqXhr, textStatus, errorThrown) {};
 
-        ContentEditPageViewModel.prototype.onUpdateSuccess = function(id, dfd /*, data, textStatus, jqXhr*/ ) {
+        ContentEditPageBaseViewModel.prototype.onUpdateSuccess = function(id, dfd /*, data, textStatus, jqXhr*/ ) {
             var self = this;
 
-            toastr.success('Le contenu a été sauvegardé.');
+            toastr.success(self.settings.contentUpdatedMessage);
             self.loadContent(id, dfd);
         };
 
-        ContentEditPageViewModel.prototype.handleSaveConflict = function(writeModel, conflictInfo, dfd) {
+        ContentEditPageBaseViewModel.prototype.handleSaveConflict = function(writeModel, conflictInfo, dfd) {
             var self = this;
         };
 
-        ContentEditPageViewModel.prototype.handleServerValidationErrors = function(errors, dfd) {
+        ContentEditPageBaseViewModel.prototype.handleServerValidationErrors = function(errors, dfd) {
             var self = this;
             //On affiche seulement les erreurs globales (key = '') pour l'instant
             //TODO: Vider les erreurs avant de commencer ?
@@ -444,10 +475,10 @@ define([
             }
         };
 
-        ContentEditPageViewModel.prototype.prepareScreenForValidationErrors = function(dfd) {
+        ContentEditPageBaseViewModel.prototype.prepareScreenForValidationErrors = function(dfd) {
             var self = this;
 
-            toastr.error('Le formulaire comporte des erreurs. Veuillez les corriger.');
+            toastr.error(self.settings.validationErrorsMessage);
 
             if (self.selectFirstTabWithValidationErrors) {
                 self.selectFirstTabWithValidationErrors();
@@ -460,7 +491,7 @@ define([
             });
         };
 
-        ContentEditPageViewModel.prototype.selectFirstTabWithValidationErrors = function() {
+        ContentEditPageBaseViewModel.prototype.selectFirstTabWithValidationErrors = function() {
             var panel = $('.tab-pane.active');
 
             if (!panel.length || !panel.find('.form-group.has-error').length) {
@@ -474,7 +505,7 @@ define([
             }
         };
 
-        ContentEditPageViewModel.prototype.finalize = function() {
+        ContentEditPageBaseViewModel.prototype.finalize = function() {
             var self = this;
 
             self.takeOriginalModelSnapshot();
@@ -483,12 +514,12 @@ define([
         };
 
         //TODO: Utiliser de l'héritage & call base dans la fonction qui override au lieu de nommer cette fonction baseDispose
-        ContentEditPageViewModel.prototype.baseDispose = function() {
+        ContentEditPageBaseViewModel.prototype.baseDispose = function() {
             var self = this;
 
             $(window).off('beforeunload.editpage');
             router.navigating.unsubscribe(self.canNavigate);
-            self.koDisposer.dispose();
+            self.disposer.dispose();
         };
 
         function saveInner(self, isValid, dfd, options) {
@@ -508,18 +539,18 @@ define([
         function loadContentInner(self, id, dfd) {
             if (id) {
                 self.api.getJson(self.apiResourceName + '/' + id,
-                    function(content) {
-                        return self.onContentLoaded(content).then(function() {
-                            dfd.resolve();
-                        });
-                    })
-                .fail(function(jqXHR, textStatus, errorThrown) {
-                    dfd.reject(jqXHR, textStatus, errorThrown);
-                });
+                        function(content) {
+                            return self.onContentLoaded(content).then(function() {
+                                dfd.resolve();
+                            });
+                        })
+                    .fail(function(jqXHR, textStatus, errorThrown) {
+                        dfd.reject(jqXHR, textStatus, errorThrown);
+                    });
             } else {
                 dfd.resolve();
             }
         }
 
-        return ContentEditPageViewModel;
+        return ContentEditPageBaseViewModel;
     });

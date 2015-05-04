@@ -9,11 +9,11 @@ define([
         'router',
         'object-utilities',
         'string-utilities',
-        'knockout-mapping-utilities',
-        'knockout-disposer'
+        'mapping-utilities',
+        'disposer'
     ],
     function(ko, $, _, urlUtilities, router,
-        objectUtilities, stringUtilities, koMappingUtilities, KoDisposer) {
+        objectUtilities, stringUtilities, mappingUtilities, disposer) {
         'use strict';
 
         var defaultPagingInfo = {
@@ -23,27 +23,35 @@ define([
             pageSize: null
         };
 
-        var ContentListPageBaseViewModel = function(api, apiResourceName, defaultSearchFields, sortable, pageable) {
+        var defaultSettings = {
+            defaultSearchFields: {},
+            pageable: true
+        };
+
+        var ContentListPageBaseViewModel = function(api, apiResourceName, settings) {
             var self = this;
 
-            self.koDisposer = new KoDisposer();
+            if (!api) {
+                throw new Error('ContentListPageBaseViewModel - missing api');
+            }
+
+            if (!apiResourceName) {
+                throw new Error('ContentListPageBaseViewModel - missing api resource name');
+            }
+
+            self.disposer = new disposer();
             self.apiResourceName = apiResourceName;
             self.api = api;
-            self.apiCriteriaFields = Object.keys(defaultSearchFields).concat(Object.keys(defaultPagingInfo));
+
+            self.settings = $.extend({}, defaultSettings, settings);
+
+            self.apiCriteriaFields = Object.keys(self.settings.defaultSearchFields).concat(Object.keys(defaultPagingInfo));
             self.searchArguments = null;
             self.isSearchInProgress = ko.observable(false);
-            self.defaultSearchFields = _.clone(defaultSearchFields);
-            self.searchFields = ko.mapping.fromJS(self.defaultSearchFields);
+            self.searchFields = ko.mapping.fromJS(self.settings.defaultSearchFields);
             self.items = ko.observableArray([]);
             self.skipUpdateUrlOneTime = false;
-            self.sortable = !!sortable;
-
-            self.pageable = (!self.sortable && pageable !== false);
-
-
             self.isSorting = ko.observable(false);
-
-
             self.title = ko.observable('');
             self.returnUrl = ko.observable('');
             self.returnTitle = ko.observable('');
@@ -51,9 +59,7 @@ define([
             self.hasItems = ko.pureComputed(function() {
                 return self.items().length > 0;
             });
-            self.koDisposer.add(self.hasItems);
-
-            //TODO: Faire un mixin pour une list 'orderable' (inverse de sortable)...
+            self.disposer.add(self.hasItems);
 
             self.pagingInfo = ko.observable(defaultPagingInfo);
 
@@ -72,21 +78,21 @@ define([
 
                 return $.param(queryParams);
             });
-            self.koDisposer.add(self.returnToQueryString);
+            self.disposer.add(self.returnToQueryString);
 
             self.creationFormUrl = ko.pureComputed(function() {
                 //Attention - ceci est une convention!
                 return urlUtilities.url(apiResourceName + '/edit?' + self.returnToQueryString());
             });
-            self.koDisposer.add(self.creationFormUrl);
+            self.disposer.add(self.creationFormUrl);
 
             return self;
         };
 
         ContentListPageBaseViewModel.prototype.toApiCriteria = function(searchArguments) {
+            //This is error prone... this means that you have to pass all possible search fields to the 
+            //defaultSearchFields setting in order to be able to use a specific field later (may be acceptable but must be explicit)
             var criteria = _.pick(searchArguments, this.apiCriteriaFields);
-
-
 
             return criteria;
         };
@@ -116,7 +122,7 @@ define([
                     self.onSearchFail(jqXhr, textStatus, errorThrown);
                 })
                 .always(function() {
-                    if (self.pageable) {
+                    if (self.settings.pageable) {
                         self.isPaging(false);
                     }
 
@@ -137,7 +143,7 @@ define([
         ContentListPageBaseViewModel.prototype.onSearchSuccess = function(searchResult) {
             var self = this;
 
-            if (self.pageable) {
+            if (self.settings.pageable) {
                 updatePagingInfo(self, searchResult);
             }
 
@@ -151,7 +157,7 @@ define([
 
             self.addPropertiesToItems(newItems);
 
-            if (self.pageable) {
+            if (self.settings.pageable) {
                 var allItems = newItems;
 
                 if (self.isPaging()) {
@@ -175,13 +181,13 @@ define([
             var self = this;
             window.scrollTo(0, 0);
 
-            if (self.pageable) {
+            if (self.settings.pageable) {
                 self.resetPageNumber();
             }
 
             self.searchArguments = self.getSearchArgumentsFromFields();
 
-            if (self.pageable) {
+            if (self.settings.pageable) {
                 self.updateSearchArgumentsWithPagingFields();
             }
 
@@ -278,7 +284,7 @@ define([
         ContentListPageBaseViewModel.prototype.getSearchArgumentsFromFields = function() {
             var self = this;
 
-            var searchFields = koMappingUtilities.toJS(self.searchFields);
+            var searchFields = mappingUtilities.toJS(self.searchFields);
             searchFields = objectUtilities.pickNonFalsy(searchFields);
 
             return searchFields;
@@ -303,12 +309,12 @@ define([
                 try {
                     if (self.route.query && !_.isEmpty(self.route.query)) {
 
-                        if (self.pageable) {
+                        if (self.settings.pageable) {
                             updatePagingInfoFromQueryParams(self, self.route.query);
                         }
 
                         self.deserializeSearchFields(self.route.query).then(function(deserializedSearchFields) {
-                            var searchFields = objectUtilities.pickInBoth(deserializedSearchFields, self.defaultSearchFields);
+                            var searchFields = objectUtilities.pickInBoth(deserializedSearchFields, self.settings.defaultSearchFields);
 
                             ko.mapping.fromJS(searchFields, self.searchFields);
 
@@ -326,7 +332,7 @@ define([
         ContentListPageBaseViewModel.prototype.handleUnknownError = function(jqXHR, textStatus, errorThrown) {};
 
         ContentListPageBaseViewModel.prototype.dispose = function() {
-            this.koDisposer.dispose();
+            this.disposer.dispose();
         };
 
         function updatePagingInfoFromQueryParams(self, queryParams) {
