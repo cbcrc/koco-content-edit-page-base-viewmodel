@@ -14,6 +14,7 @@
 	- [Setup of content editing page](#setup-of-content-editing-page)
 		- [Activator for content editing page](#content-editing-page-activator)
 		- [Base ViewModel for content editing page](#content-editing-page-base-viewmodel)
+- [Registering Content Pages](#registering-content-pages)
 
 
 ## Installation
@@ -37,7 +38,7 @@ You can use the default `activator` ([see koco-router activator contract for mor
 ```javascript
 paths: {
   ...
-  'content-list-page-base-activator': 'bower_components/koco-content-management/src/listing/content-list-page-base-activator'
+  'content-list-page-base-activator': 'bower_components/koco-content-management/src/listing/content-list-page-activator'
   ...
 }
 ```
@@ -239,4 +240,32 @@ define(['knockout', 'jquery', 'text!./my-edit-page.html'],
             template: template
         };
     });
+```
+
+## Registering Content Pages
+
+The content management comes with a utility function that works well with koco and can be used this way:
+
+```javascript
+// require.config.js
+paths: {
+    ...
+    'content-management': 'bower_components/koco-content-management/src/content-management'
+    ...
+}
+```
+
+```javascript
+// components.js
+define([..., 'content-management'], 
+    function(contentManagement) {
+        ...
+        contentManagement.registerContentPages('my-content', {
+                withActivator: true, //default:true
+                editTitle: 'Editing My Content',
+                listTitle: 'Listing My Content',
+                listContentName: '' //default:adds an 's' at the end of the provided content name
+            })
+        ...
+        });
 ```

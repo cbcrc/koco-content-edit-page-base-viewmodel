@@ -20,5 +20,23 @@
     "bower_components",
     "test",
     "tests"
-  ]
+  ],
+  "dependencies": {
+    "koco-object-utilities": "^0.1.0",
+    "koco-mapping-utilities": "^0.1.0",
+    "koco-url-utilities": "^0.1.5",
+    "koco-router": "^0.3.7",
+    "koco-validation": "^0.2.2",
+    "koco-array-utilities": "^0.1.1",
+    "jquery": "^2.1.4",
+    "lodash": "^3.8.0",
+    "knockout": "^3.3.0",
+    "toastr": "~2.1.1",
+    "requirejs": "~2.1.17",
+    "koco-toastr": "~0.1.1",
+    "koco-disposer": "~0.1.0"
+  },
+  "resolutions": {
+    "lodash": "^3.8.0"
+  }
 }
