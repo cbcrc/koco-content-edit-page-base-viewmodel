@@ -49,6 +49,7 @@ define([
             self.searchArguments = null;
             self.isSearchInProgress = ko.observable(false);
             self.searchFields = ko.mapping.fromJS(self.settings.defaultSearchFields);
+            self.totalNumberOfItems = ko.observable();
             self.items = ko.observableArray([]);
             self.skipUpdateUrlOneTime = false;
             self.isSorting = ko.observable(false);
@@ -153,6 +154,8 @@ define([
 
             self.skipUpdateUrlOneTime = false;
 
+            self.totalNumberOfItems(searchResult.totalNumberOfItems);
+            
             var newItems = self.getItemsFromSearchResult(searchResult);
 
             self.addPropertiesToItems(newItems);
