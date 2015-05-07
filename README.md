@@ -38,7 +38,7 @@ You can use the default `activator` ([see koco-router activator contract for mor
 ```javascript
 paths: {
   ...
-  'content-list-page-base-activator': 'bower_components/koco-content-management/src/listing/content-list-page-activator'
+  'content-list-page-base-activator': 'bower_components/koco-content-management/src/listing/content-list-page-base-activator'
   ...
 }
 ```
