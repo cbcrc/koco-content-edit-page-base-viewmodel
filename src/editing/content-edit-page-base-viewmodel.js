@@ -368,7 +368,7 @@ define([
             });
         };
 
-        ContentEditPageBaseViewModel.prototype.create = function(writeModel, dfd) {
+        ContentEditPageBaseViewModel.prototype.create = function(writeModel, dfd, options) {
             var self = this;
 
             self.api.postJson(self.apiResourceName, writeModel)
@@ -380,7 +380,7 @@ define([
                 });
         };
 
-        ContentEditPageBaseViewModel.prototype.update = function(writeModel, dfd) {
+        ContentEditPageBaseViewModel.prototype.update = function(writeModel, dfd, options) {
             var self = this;
             var id = self.observableContent().id();
 
@@ -527,9 +527,9 @@ define([
                 var writeModel = self.toOutputModel(options);
 
                 if (self.editMode() === 'create') {
-                    self.create(writeModel, options, dfd);
+                    self.create(writeModel, dfd, options);
                 } else {
-                    self.update(writeModel, options, dfd);
+                    self.update(writeModel, dfd, options);
                 }
             } else {
                 self.prepareScreenForValidationErrors(dfd);
