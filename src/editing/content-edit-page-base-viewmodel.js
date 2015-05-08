@@ -15,7 +15,7 @@ define([
         'disposer'
     ],
     function(ko, $, _, mappingUtilities, urlUtilities, router,
-        toastr, modaler, arrayUtilities, validationUtilities, disposer) {
+        toastr, modaler, arrayUtilities, validationUtilities, Disposer) {
         'use strict';
 
         var defaultSettings = {
@@ -47,7 +47,7 @@ define([
 
             self.api = api;
 
-            self.disposer = new disposer();
+            self.disposer = new Disposer();
 
             self.observableContent = ko.validatedObservable(observableContent);
             self.observableContent.extend({

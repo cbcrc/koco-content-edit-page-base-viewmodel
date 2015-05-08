@@ -13,7 +13,7 @@ define([
         'disposer'
     ],
     function(ko, $, _, urlUtilities, router,
-        objectUtilities, stringUtilities, mappingUtilities, disposer) {
+        objectUtilities, stringUtilities, mappingUtilities, Disposer) {
         'use strict';
 
         var defaultPagingInfo = {
@@ -39,7 +39,7 @@ define([
                 throw new Error('ContentListPageBaseViewModel - missing api resource name');
             }
 
-            self.disposer = new disposer();
+            self.disposer = new Disposer();
             self.apiResourceName = apiResourceName;
             self.api = api;
 
