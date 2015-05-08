@@ -68,18 +68,7 @@ define([
 
             self.isPaging = ko.observable(false);
 
-            self.returnToQueryString = ko.pureComputed(function() {
-                if (!router.context()) {
-                    return '';
-                }
-
-                var queryParams = {
-                    returnTo: getUrlWithUpdatedQueryString(self)
-                };
-
-                return $.param(queryParams);
-            });
-            self.disposer.add(self.returnToQueryString);
+            self.returnToQueryString = ko.observable('');
 
             self.creationFormUrl = ko.pureComputed(function() {
                 //Attention - ceci est une convention!
@@ -150,6 +139,8 @@ define([
 
             self.skipUpdateUrlOneTime = false;
 
+            self.updateReturnToQueryString();
+
             self.totalNumberOfItems(searchResult.totalNumberOfItems);
 
             var newItems = self.getItemsFromSearchResult(searchResult);
@@ -174,6 +165,16 @@ define([
             } else {
                 self.items(newItems);
             }
+        };
+
+ContentListPageBaseViewModel.prototype.updateReturnToQueryString = function() {
+            var self = this;
+
+            var queryParams = {
+                returnTo: getUrlWithUpdatedQueryString(self)
+            };
+
+            self.returnToQueryString($.param(queryParams));
         };
 
         ContentListPageBaseViewModel.prototype.searchWithFilters = function() {
