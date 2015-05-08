@@ -312,7 +312,7 @@ define([
 
             return new $.Deferred(function(dfd) {
                 try {
-                    self.initSearchFieldsAndPagingInfoInner(dfd);
+                    self.initSearchFieldsAndPagingInfo(dfd);
                 } catch (err) {
                     dfd.reject(err);
                 }
