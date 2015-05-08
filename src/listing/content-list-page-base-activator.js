@@ -22,7 +22,7 @@ define(['knockout', 'jquery'],
                         .then(function() {
                             context.skipUpdateUrlOneTime = true;
 
-                            return context.initSearchFieldsAndPagingInfo().then(function() {
+                            return context.initSearchFieldsAndPagingInfoOuter().then(function() {
                                 return context.searchWithFilters().then(function() {
                                     dfd.resolve();
                                 });
