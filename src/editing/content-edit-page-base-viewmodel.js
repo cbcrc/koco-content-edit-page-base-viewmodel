@@ -112,7 +112,11 @@ define([
                     self.serverSideValidationErrors([]);
 
                     self.validate().then(function(isValid) {
-                        saveInner(self, isValid, dfd, options);
+                        if (isValid) {
+                            saveInner(self, dfd, options);
+                        } else {
+                            self.prepareScreenForValidationErrors(dfd);
+                        }
                     }).fail(function() {
                         dfd.reject.apply(self, arguments);
                     });
@@ -486,9 +490,7 @@ define([
 
             $('html, body').animate({
                 scrollTop: 0
-            }, 'slow', function() {
-                dfd.resolve();
-            });
+            }, dfd ? dfd.resolve : null);
         };
 
         ContentEditPageBaseViewModel.prototype.selectFirstTabWithValidationErrors = function() {
@@ -522,17 +524,13 @@ define([
             self.disposer.dispose();
         };
 
-        function saveInner(self, isValid, dfd, options) {
-            if (isValid) {
-                var writeModel = self.toOutputModel(options);
+        function saveInner(self, dfd, options) {
+            var writeModel = self.toOutputModel(options);
 
-                if (self.editMode() === 'create') {
-                    self.create(writeModel, dfd, options);
-                } else {
-                    self.update(writeModel, dfd, options);
-                }
+            if (self.editMode() === 'create') {
+                self.create(writeModel, dfd, options);
             } else {
-                self.prepareScreenForValidationErrors(dfd);
+                self.update(writeModel, dfd, options);
             }
         }
 
