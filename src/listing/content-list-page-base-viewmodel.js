@@ -91,7 +91,7 @@ define([
         };
 
         ContentListPageBaseViewModel.prototype.toApiCriteria = function(searchArguments) {
-            //This is error prone... this means that you have to pass all possible search fields to the 
+            //This is error prone... this means that you have to pass all possible search fields to the
             //defaultSearchFields setting in order to be able to use a specific field later (may be acceptable but must be explicit)
             var criteria = _.pick(searchArguments, this.apiCriteriaFields);
 
@@ -123,10 +123,6 @@ define([
                     self.onSearchFail(jqXhr, textStatus, errorThrown);
                 })
                 .always(function() {
-                    if (self.settings.pageable) {
-                        self.isPaging(false);
-                    }
-
                     self.isSearchInProgress(false);
                 });
 
@@ -155,7 +151,7 @@ define([
             self.skipUpdateUrlOneTime = false;
 
             self.totalNumberOfItems(searchResult.totalNumberOfItems);
-            
+
             var newItems = self.getItemsFromSearchResult(searchResult);
 
             self.addPropertiesToItems(newItems);
@@ -228,12 +224,18 @@ define([
 
             self.updateSearchArgumentsWithPagingFields();
 
-            return self.search();
+            var search = self.search();
+            search.always(function() {
+                self.isPaging(false);
+            });
+
+            return search;
         };
 
         ContentListPageBaseViewModel.prototype.updateOrderBy = function(newOrderBy) {
             var self = this;
             var pagingInfo = self.pagingInfo();
+            pagingInfo.pageNumber = 1;
 
             if (stringUtilities.equalsIgnoreCase(pagingInfo.orderBy, newOrderBy)) {
                 if (stringUtilities.equalsIgnoreCase(pagingInfo.orderByDirection, 'ascending')) {
@@ -242,7 +244,7 @@ define([
                     pagingInfo.orderByDirection = 'ascending';
                 }
             } else {
-                pagingInfo.orderByDirection = null;
+                pagingInfo.orderByDirection = 'ascending';
                 pagingInfo.orderBy = newOrderBy;
             }
 
@@ -305,31 +307,37 @@ define([
             }).promise();
         };
 
-        ContentListPageBaseViewModel.prototype.initSearchFieldsAndPagingInfo = function() {
+        ContentListPageBaseViewModel.prototype.initSearchFieldsAndPagingInfoOuter = function() {
             var self = this;
 
             return new $.Deferred(function(dfd) {
                 try {
-                    if (self.route.query && !_.isEmpty(self.route.query)) {
-
-                        if (self.settings.pageable) {
-                            updatePagingInfoFromQueryParams(self, self.route.query);
-                        }
-
-                        self.deserializeSearchFields(self.route.query).then(function(deserializedSearchFields) {
-                            var searchFields = objectUtilities.pickInBoth(deserializedSearchFields, self.settings.defaultSearchFields);
-
-                            ko.mapping.fromJS(searchFields, self.searchFields);
-
-                            dfd.resolve();
-                        });
-                    } else {
-                        dfd.resolve();
-                    }
+                    self.initSearchFieldsAndPagingInfoInner(dfd);
                 } catch (err) {
                     dfd.reject(err);
                 }
             }).promise();
+        };
+
+        ContentListPageBaseViewModel.prototype.initSearchFieldsAndPagingInfo = function(dfd) {
+            var self = this;
+
+            if (self.route.query && !_.isEmpty(self.route.query)) {
+
+                if (self.settings.pageable) {
+                    updatePagingInfoFromQueryParams(self, self.route.query);
+                }
+
+                self.deserializeSearchFields(self.route.query).then(function(deserializedSearchFields) {
+                    var searchFields = objectUtilities.pickInBoth(deserializedSearchFields, self.settings.defaultSearchFields);
+
+                    ko.mapping.fromJS(searchFields, self.searchFields);
+
+                    dfd.resolve();
+                });
+            } else {
+                dfd.resolve();
+            }
         };
 
         ContentListPageBaseViewModel.prototype.handleUnknownError = function(jqXHR, textStatus, errorThrown) {};
@@ -365,8 +373,9 @@ define([
         }
 
         function getUrlWithUpdatedQueryString(self) {
-            var routeUrl = router.context().route.url;
-            var currentQueryString = router.context().route.query.toString();
+            var route = !router.isActivating() && router.context() ? router.context().route : self.route;
+            var routeUrl = route.url;
+            var currentQueryString = route.query.toString();
             var newQueryString = self.getCurrentQueryString();
 
             var result;
