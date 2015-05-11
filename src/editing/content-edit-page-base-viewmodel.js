@@ -107,7 +107,7 @@ define([
         ContentEditPageBaseViewModel.prototype.save = function(options) {
             var self = this;
 
-            var promise = new $.Deferred(function(dfd) {
+            var promise = $.Deferred(function(dfd) {
                 try {
                     self.serverSideValidationErrors([]);
 
@@ -115,7 +115,7 @@ define([
                         if (isValid) {
                             saveInner(self, dfd, options);
                         } else {
-                            self.prepareScreenForValidationErrors(dfd);
+                            dfd.resolve();
                         }
                     }).fail(function() {
                         dfd.reject.apply(self, arguments);
@@ -133,6 +133,18 @@ define([
         };
 
         ContentEditPageBaseViewModel.prototype.validate = function() {
+            var self = this;
+
+            var promise = self.validateInner().then(function (isValid) {
+                if (!isValid) {
+                    self.prepareScreenForValidationErrors();
+                }
+            });
+
+            return promise;
+        };
+
+        ContentEditPageBaseViewModel.prototype.validateInner = function() {
             var self = this;
 
             return validationUtilities.validateObservables(self.validatedObservables);
@@ -306,7 +318,7 @@ define([
                 return dfd;
             }
 
-            return new $.Deferred(function(dfd) {
+            return $.Deferred(function(dfd) {
                 try {
                     loadContentInner(self, id, dfd);
                 } catch (error) {
@@ -317,11 +329,11 @@ define([
         };
 
         ContentEditPageBaseViewModel.prototype.loadLookups = function() {
-            return new $.Deferred().resolve().promise();
+            return $.Deferred().resolve().promise();
         };
 
         ContentEditPageBaseViewModel.prototype.afterContentLoaded = function() {
-            return new $.Deferred().resolve().promise();
+            return $.Deferred().resolve().promise();
         };
 
         ContentEditPageBaseViewModel.prototype.onContentLoaded = function(content) {
@@ -336,7 +348,7 @@ define([
 
             self.takeOriginalModelSnapshot();
 
-            return new $.Deferred().resolve().promise();
+            return $.Deferred().resolve().promise();
         };
 
         ContentEditPageBaseViewModel.prototype.fromInputModel = function(inputModel) {
