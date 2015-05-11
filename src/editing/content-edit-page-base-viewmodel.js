@@ -135,7 +135,9 @@ define([
         ContentEditPageBaseViewModel.prototype.validate = function() {
             var self = this;
 
-            var promise = self.validateInner().then(function (isValid) {
+            var promise = self.validateInner();
+
+            promise.then(function (isValid) {
                 if (!isValid) {
                     self.prepareScreenForValidationErrors();
                 }
