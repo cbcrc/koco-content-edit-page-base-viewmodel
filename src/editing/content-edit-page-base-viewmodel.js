@@ -344,13 +344,20 @@ define([
             var adaptedContentFromServer = self.fromInputModel(content);
 
             var mapping = {};
+
             mappingUtilities.mapAsObservableValueObjects(mapping, self.settings.observableValueObjects);
+
+            self.updateMapping(mapping);
 
             ko.mapping.fromJS(adaptedContentFromServer, mapping, self.observableContent);
 
             self.takeOriginalModelSnapshot();
 
             return $.Deferred().resolve().promise();
+        };
+
+        ContentEditPageBaseViewModel.prototype.updateMapping = function(mapping) {
+
         };
 
         ContentEditPageBaseViewModel.prototype.fromInputModel = function(inputModel) {
