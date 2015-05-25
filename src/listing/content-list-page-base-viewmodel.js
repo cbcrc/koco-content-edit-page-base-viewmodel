@@ -167,7 +167,7 @@ define([
             }
         };
 
-ContentListPageBaseViewModel.prototype.updateReturnToQueryString = function() {
+        ContentListPageBaseViewModel.prototype.updateReturnToQueryString = function() {
             var self = this;
 
             var queryParams = {
@@ -253,7 +253,7 @@ ContentListPageBaseViewModel.prototype.updateReturnToQueryString = function() {
 
             self.updateSearchArgumentsWithPagingFields();
 
-            self.search();
+            return self.search();
         };
 
         ContentListPageBaseViewModel.prototype.addPropertiesToItems = function(items) {
