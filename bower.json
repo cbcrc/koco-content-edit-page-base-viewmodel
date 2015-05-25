@@ -36,7 +36,8 @@
     "toastr": "^2.1.1",
     "requirejs": "^2.1.17",
     "koco-toastr": "^0.1.1",
-    "koco-disposer": "^0.1.0"
+    "koco-disposer": "^0.1.0",
+    "koco-list-base-viewmodel": "^0.1.2"
   },
   "resolutions": {
     "lodash": "^3.8.0"
