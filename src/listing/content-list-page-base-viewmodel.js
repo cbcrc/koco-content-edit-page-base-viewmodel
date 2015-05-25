@@ -72,7 +72,7 @@ define([
 
         };
 
-ContentListPageBaseViewModel.prototype.updateReturnToQueryString = function() {
+        ContentListPageBaseViewModel.prototype.updateReturnToQueryString = function() {
             var self = this;
 
             var queryParams = {
