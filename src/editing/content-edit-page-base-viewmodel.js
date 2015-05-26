@@ -442,6 +442,7 @@ define([
                     break;
                 default:
                     self.handleUnknownError(jqXhr, textStatus, errorThrown);
+                    dfd.resolve();
                     break;
             }
         };
