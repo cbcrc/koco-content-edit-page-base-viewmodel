@@ -373,7 +373,7 @@ define([
                 var url = self.apiResourceName + '/edit';
 
                 var defaultOptions = {
-                    url: route.url.toLowerCase().replace(url, url + '/' + id),
+                    url: route.url.replace(new RegExp(url, 'i'), url + '/' + id),
                     pageTitle: router.context().pageTitle,
                     stateObject: {},
                     replace: true
