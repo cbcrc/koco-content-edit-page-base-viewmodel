@@ -556,13 +556,20 @@ define([
         }
 
         function loadContentInner(self, id, dfd) {
+            var dataParams = null;
+            
+            if (self.apiCriteria) {
+                dataParams = { data: $.param(self.apiCriteria, true) };
+            }
+
             if (id) {
                 self.api.getJson(self.apiResourceName + '/' + id,
                         function(content) {
                             return self.onContentLoaded(content).then(function() {
                                 dfd.resolve();
                             });
-                        })
+                        },
+                        dataParams)
                     .fail(function(jqXHR, textStatus, errorThrown) {
                         dfd.reject(jqXHR, textStatus, errorThrown);
                     });
