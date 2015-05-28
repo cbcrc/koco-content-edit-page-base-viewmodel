@@ -26,7 +26,7 @@ define([
             contentCreatedMessage: 'Le contenu a été sauvegardé.',
             contentUpdatedMessage: 'Le contenu a été sauvegardé.',
             validationErrorsMessage: 'Le formulaire comporte des erreurs. Veuillez les corriger.',
-            apiQueryParams: {}
+            apiQueryParams: null
         };
 
         var ContentEditPageBaseViewModel = function(api, apiResourceName, observableContent, settings) {
