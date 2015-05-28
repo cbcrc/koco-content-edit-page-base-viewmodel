@@ -25,7 +25,8 @@ define([
             quitConfirmMessage: 'Si vous quitter cette page, vos changements seront perdus.',
             contentCreatedMessage: 'Le contenu a été sauvegardé.',
             contentUpdatedMessage: 'Le contenu a été sauvegardé.',
-            validationErrorsMessage: 'Le formulaire comporte des erreurs. Veuillez les corriger.'
+            validationErrorsMessage: 'Le formulaire comporte des erreurs. Veuillez les corriger.',
+            apiQueryParams: {}
         };
 
         var ContentEditPageBaseViewModel = function(api, apiResourceName, observableContent, settings) {
@@ -45,6 +46,8 @@ define([
 
             self.settings = $.extend({}, defaultSettings, settings);
 
+            self.apiQueryParams = self.settings.apiQueryParams;
+
             self.api = api;
 
             self.disposer = new Disposer();
@@ -61,7 +64,7 @@ define([
             self.validatedObservables = [self.observableContent];
 
             self.editMode = ko.pureComputed(function() {
-                return self.observableContent().id() ? 'update' : 'create';
+                return self.getId() ? 'update' : 'create';
             });
             self.disposer.add(self.editMode);
 
@@ -71,6 +74,10 @@ define([
                 return mappingUtilities.toJS(self.observableContent);
             });
             self.disposer.add(self.content);
+        };
+
+        ContentEditPageBaseViewModel.prototype.getId = function() {
+            return self.observableContent().id();
         };
 
         ContentEditPageBaseViewModel.prototype.canNavigate = function() {
@@ -406,10 +413,15 @@ define([
         };
 
         ContentEditPageBaseViewModel.prototype.update = function(writeModel, dfd, options) {
-            var self = this;
-            var id = self.observableContent().id();
+            var self = this,
+                id = self.getId(),
+                queryParams = '';
 
-            self.api.putJson(self.apiResourceName + '/' + id, writeModel)
+            if (self.apiQueryParams) {
+                queryParams = '?' + $.param(self.apiQueryParams, true);
+            }
+
+            self.api.putJson(self.apiResourceName + '/' + id + queryParams, writeModel)
                 .fail(function(jqXhr, textStatus, errorThrown) {
                     self.onUpdateFail(dfd, writeModel, id, jqXhr, textStatus, errorThrown);
                 })
@@ -558,8 +570,8 @@ define([
         function loadContentInner(self, id, dfd) {
             var dataParams = null;
             
-            if (self.apiCriteria) {
-                dataParams = { data: $.param(self.apiCriteria, true) };
+            if (self.apiQueryParams) {
+                dataParams = { data: $.param(self.apiQueryParams, true) };
             }
 
             if (id) {
