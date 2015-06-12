@@ -78,6 +78,8 @@ define([
         };
 
         ContentEditPageBaseViewModel.prototype.getId = function() {
+            var self = this;
+
             return self.observableContent().id();
         };
 
@@ -573,7 +575,7 @@ define([
 
         function loadContentInner(self, id, dfd) {
             var dataParams = null;
-            
+
             if (self.apiQueryParams) {
                 dataParams = { data: $.param(self.apiQueryParams, true) };
             }
