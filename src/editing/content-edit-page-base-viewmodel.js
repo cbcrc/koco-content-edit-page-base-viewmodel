@@ -26,6 +26,7 @@ define([
             contentCreatedMessage: 'Le contenu a été sauvegardé.',
             contentUpdatedMessage: 'Le contenu a été sauvegardé.',
             validationErrorsMessage: 'Le formulaire comporte des erreurs. Veuillez les corriger.',
+            unknownErrorMessage: 'Une erreur de type inconnu est survenu: ',
             apiQueryParams: null
         };
 
@@ -478,7 +479,10 @@ define([
             }
         };
 
-        ContentEditPageBaseViewModel.prototype.handleUnknownError = function(jqXhr, textStatus, errorThrown) {};
+        ContentEditPageBaseViewModel.prototype.handleUnknownError = function(jqXhr, textStatus, errorThrown) {
+            var self = this;
+            toastr.error(self.settings.unknownErrorMessage + errorThrown);
+        };
 
         ContentEditPageBaseViewModel.prototype.onUpdateSuccess = function(id, dfd /*, data, textStatus, jqXhr*/ ) {
             var self = this;
