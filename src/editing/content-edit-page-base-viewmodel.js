@@ -27,6 +27,7 @@ define([
             contentUpdatedMessage: 'Le contenu a été sauvegardé.',
             validationErrorsMessage: 'Le formulaire comporte des erreurs. Veuillez les corriger.',
             unknownErrorMessage: 'Une erreur de type inconnu est survenu: ',
+            confirmQuitButtonText: 'Quitter',
             apiQueryParams: null
         };
 
@@ -96,7 +97,7 @@ define([
 
             return modaler.show('confirm', {
                 message: self.settings.quitConfirmMessage,
-                okButtonHtml: 'Quitter'
+                okButtonHtml: self.settings.confirmQuitButtonText
             });
         };
 
