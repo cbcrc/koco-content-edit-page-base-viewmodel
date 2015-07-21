@@ -447,10 +447,10 @@ define([
             var self = this;
 
             switch (jqXhr.status) {
-                case 400: //Erreurs de validations
+                case 400:
                     self.handleServerValidationErrors(jqXhr.responseJSON, dfd);
                     break;
-                case 406: //erreur a la sauvegarde des donnees
+                case 406:
                     self.handleServerValidationErrors([jqXhr.responseJSON], dfd);
                     break;
                 case 409: //Version conflict
@@ -467,17 +467,15 @@ define([
             var self = this;
 
             switch (jqXhr.status) {
-                case 400: //Erreurs de validations
+                case 400:
                     self.handleServerValidationErrors(jqXhr.responseJSON, dfd);
                     break;
-                case 406: //erreur a la sauvegarde des donnees
+                case 406:
                     self.handleServerValidationErrors([jqXhr.responseJSON], dfd);
                     break;
                 default:
                     self.handleUnknownError(jqXhr, textStatus, errorThrown);
-                    self.isChangesWillBeLostConfirmationDisabled = true;
                     dfd.resolve();
-                    router.navigate(urlUtilities.getReturnUrl(self.apiResourceName)); //Convention pour l'url...
                     break;
             }
         };
