@@ -45,8 +45,9 @@ define([
 
         ContentListPageBaseViewModel.prototype.getCurrentQueryString = function() {
             var self = this;
-            var cleanedArguments = objectUtilities.pickNonFalsy(self.searchArguments);
-            delete cleanedArguments.pageNumber;
+            var args = mappingUtilities.toJS(self.searchArguments);
+            var cleanedArguments = objectUtilities.pickNonFalsy(args);
+            delete cleanedArguments[this.settings.defaultPagingAttr.pageNumber];
 
             return $.param(cleanedArguments);
         };
