@@ -7,13 +7,14 @@ define([
         'lodash',
         'url-utilities',
         'router',
+        'query',
         'object-utilities',
         'string-utilities',
         'mapping-utilities',
         'disposer',
         'list-base-viewmodel'
     ],
-    function(ko, $, _, urlUtilities, router,
+    function(ko, $, _, urlUtilities, router, Query,
         objectUtilities, stringUtilities, mappingUtilities, Disposer, ListBaseViewModel) {
         'use strict';
 
@@ -150,14 +151,15 @@ define([
 
         ContentListPageBaseViewModel.prototype.initSearchArgumentsAndPagingInfo = function(dfd) {
             var self = this;
-
-            if (self.route.query && !_.isEmpty(self.route.query)) {
+            
+            var currentQuery = new Query(self.route.url);
+            if (currentQuery && !_.isEmpty(currentQuery)) {
 
                 if (self.settings.pageable) {
-                    updatePagingInfoFromQueryParams(self, self.route.query);
+                    updatePagingInfoFromQueryParams(self, currentQuery);
                 }
 
-                self.deserializeSearchArguments(self.route.query).then(function(deserializedSearchArguments) {
+                self.deserializeSearchArguments(currentQuery).then(function(deserializedSearchArguments) {
                     var searchArguments = objectUtilities.pickInBoth(deserializedSearchArguments, self.settings.defaultSearchArguments);
 
                     ko.mapping.fromJS(searchArguments, self.searchArguments);
@@ -188,7 +190,8 @@ define([
         function getUrlWithUpdatedQueryString(self) {
             var route = !router.isActivating() && router.context() ? router.context().route : self.route;
             var routeUrl = route.url;
-            var currentQueryString = route.query.toString();
+            var currentQuery = new Query(route.url);
+            var currentQueryString = currentQuery.toString();
             var newQueryString = self.getCurrentQueryString();
 
             var result;

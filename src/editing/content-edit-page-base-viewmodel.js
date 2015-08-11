@@ -558,7 +558,7 @@ define([
             var self = this;
 
             $(window).off('beforeunload.editpage');
-            router.navigating.unsubscribe(self.canNavigate);
+            router.navigating.unsubscribe(self.canNavigate, self);
             self.disposer.dispose();
         };
 

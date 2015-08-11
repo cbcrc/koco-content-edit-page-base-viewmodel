@@ -1,6 +1,6 @@
 {
   "name": "koco-content-management",
-  "version": "0.1.30",
+  "version": "0.2.1",
   "homepage": "https://github.com/cbcrc/koco-content-management",
   "authors": [
     "Maxime Séguin <maxime.forget-seguin@radio-canada.ca>"
@@ -27,7 +27,7 @@
     "koco-object-utilities": "^0.1.0",
     "koco-mapping-utilities": "^0.1.0",
     "koco-url-utilities": "^0.1.5",
-    "koco-router": "^0.3.7",
+    "koco-router": "^0.4.2",
     "koco-validation": "^0.2.2",
     "koco-array-utilities": "^0.1.1",
     "jquery": "^2.1.4",
@@ -37,7 +37,8 @@
     "requirejs": "^2.1.17",
     "koco-toastr": "^0.1.1",
     "koco-disposer": "^0.1.0",
-    "koco-list-base-viewmodel": "^0.2.0"
+    "koco-list-base-viewmodel": "^0.2.0",
+    "koco-query": "^0.1.5"
   },
   "resolutions": {
     "lodash": "^3.8.0"
