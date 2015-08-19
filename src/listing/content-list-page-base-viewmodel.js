@@ -152,15 +152,15 @@ define([
         ContentListPageBaseViewModel.prototype.initSearchArgumentsAndPagingInfo = function(dfd) {
             var self = this;
             
-            var currentQuery = new Query(self.route.url);
-            if (currentQuery && !_.isEmpty(currentQuery)) {
+            var currentQueryParams = new Query(self.route.url).params;
+            if (currentQueryParams && !_.isEmpty(currentQueryParams)) {
 
                 if (self.settings.pageable) {
-                    updatePagingInfoFromQueryParams(self, currentQuery);
+                    updatePagingInfoFromQueryParams(self, currentQueryParams);
                 }
 
-                self.deserializeSearchArguments(currentQuery).then(function(deserializedSearchArguments) {
-                    var searchArguments = objectUtilities.pickInBoth(deserializedSearchArguments, self.settings.defaultSearchArguments);
+                self.deserializeSearchArguments(currentQueryParams).then(function(deserializedSearchArguments) {
+                    var searchArguments = objectUtilities.pickInBoth(deserializedSearchArguments.params, self.settings.defaultSearchArguments);
 
                     ko.mapping.fromJS(searchArguments, self.searchArguments);
 
