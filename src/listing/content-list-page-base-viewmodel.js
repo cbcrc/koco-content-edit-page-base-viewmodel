@@ -84,13 +84,6 @@ define([
             self.returnToQueryString($.param(queryParams));
         };
 
-        ContentListPageBaseViewModel.prototype.searchWithFilters = function() {
-            var self = this;
-            window.scrollTo(0, 0);
-
-            return ListBaseViewModel.prototype.searchWithFilters.call(self);
-        };
-
         ContentListPageBaseViewModel.prototype.searchByKeywords = function() {
             var self = this;
 
