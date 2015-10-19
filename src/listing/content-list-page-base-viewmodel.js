@@ -63,7 +63,7 @@ define([
             }
 
             if (self.skipUpdateUrlOneTime === false) {
-                updateUrlWithSearchArguments(self);
+                self.updateUrlWithSearchArguments();
             }
 
             self.skipUpdateUrlOneTime = false;
@@ -78,7 +78,7 @@ define([
             var self = this;
 
             var queryParams = {
-                returnTo: getUrlWithUpdatedQueryString(self)
+                returnTo: self.getUrlWithUpdatedQueryString()
             };
 
             self.returnToQueryString($.param(queryParams));
@@ -93,7 +93,7 @@ define([
         ContentListPageBaseViewModel.prototype.goToNextPage = function() {
 
             var self = this;
-            
+
 
             var search = ListBaseViewModel.prototype.goToNextPage.call(self);
             search.always(function() {
@@ -144,7 +144,7 @@ define([
 
         ContentListPageBaseViewModel.prototype.initSearchArgumentsAndPagingInfo = function(dfd) {
             var self = this;
-            
+
             var currentQueryParams = new Query(self.route.url).params;
             if (currentQueryParams && !_.isEmpty(currentQueryParams)) {
 
@@ -173,14 +173,18 @@ define([
 
 
 
-        function updateUrlWithSearchArguments(self) {
+        ContentListPageBaseViewModel.prototype.updateUrlWithSearchArguments = function() {
+            var self = this;
+
             router.setUrlSilently({
-                url: getUrlWithUpdatedQueryString(self),
+                url: self.getUrlWithUpdatedQueryString(),
                 replace: true
             });
-        }
+        };
 
-        function getUrlWithUpdatedQueryString(self) {
+        ContentListPageBaseViewModel.prototype.getUrlWithUpdatedQueryString = function() {
+            var self = this;
+
             var route = !router.isActivating() && router.context() ? router.context().route : self.route;
             var routeUrl = route.url;
             var currentQuery = new Query(route.url);
@@ -200,7 +204,7 @@ define([
             }
 
             return result;
-        }
+        };
 
         return ContentListPageBaseViewModel;
     });
