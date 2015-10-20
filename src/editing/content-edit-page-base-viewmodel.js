@@ -357,6 +357,14 @@ define([
         ContentEditPageBaseViewModel.prototype.onContentLoaded = function(content) {
             var self = this;
 
+            self.onContentLoadedInner(content);
+
+            return $.Deferred().resolve().promise();
+        };
+
+        ContentEditPageBaseViewModel.prototype.onContentLoadedInner = function(content) {
+            var self = this;
+
             var adaptedContentFromServer = self.fromInputModel(content);
 
             var mapping = {};
@@ -368,8 +376,6 @@ define([
             ko.mapping.fromJS(adaptedContentFromServer, mapping, self.observableContent);
 
             self.takeOriginalModelSnapshot();
-
-            return $.Deferred().resolve().promise();
         };
 
         ContentEditPageBaseViewModel.prototype.updateMapping = function(mapping) {
