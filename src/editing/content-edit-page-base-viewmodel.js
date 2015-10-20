@@ -124,7 +124,7 @@ define([
 
                     self.validate().then(function(isValid) {
                         if (isValid) {
-                            saveInner(self, dfd, options);
+                            self.saveInner(dfd, options);
                         } else {
                             dfd.resolve();
                         }
@@ -148,7 +148,7 @@ define([
 
             var promise = self.validateInner();
 
-            promise.then(function (isValid) {
+            promise.then(function(isValid) {
                 if (!isValid) {
                     self.prepareScreenForValidationErrors();
                 }
@@ -325,15 +325,20 @@ define([
 
         ContentEditPageBaseViewModel.prototype.loadContent = function(id, dfd) {
             var self = this;
+            var apiEndpointUrl;
+
+            if(id){
+                apiEndpointUrl = self.apiResourceName + '/' + id;
+            }
 
             if (dfd) {
-                loadContentInner(self, id, dfd);
+                self.loadContentInner(apiEndpointUrl, dfd);
                 return dfd;
             }
 
             return $.Deferred(function(dfd) {
                 try {
-                    loadContentInner(self, id, dfd);
+                    self.loadContentInner(apiEndpointUrl, dfd);
                 } catch (error) {
                     dfd.reject(error);
                 }
@@ -368,7 +373,6 @@ define([
         };
 
         ContentEditPageBaseViewModel.prototype.updateMapping = function(mapping) {
-
         };
 
         ContentEditPageBaseViewModel.prototype.fromInputModel = function(inputModel) {
@@ -562,7 +566,8 @@ define([
             self.disposer.dispose();
         };
 
-        function saveInner(self, dfd, options) {
+        ContentEditPageBaseViewModel.prototype.saveInner = function(dfd, options) {
+            var self = this;
             var writeModel = self.toOutputModel(options);
 
             if (self.editMode() === 'create') {
@@ -570,17 +575,20 @@ define([
             } else {
                 self.update(writeModel, dfd, options);
             }
-        }
+        };
 
-        function loadContentInner(self, id, dfd) {
+        ContentEditPageBaseViewModel.prototype.loadContentInner = function(apiEndpointUrl, dfd) {
+            var self = this;
             var dataParams = null;
 
             if (self.apiQueryParams) {
-                dataParams = { data: $.param(self.apiQueryParams, true) };
+                dataParams = {
+                    data: $.param(self.apiQueryParams, true)
+                };
             }
 
-            if (id) {
-                self.api.getJson(self.apiResourceName + '/' + id,
+            if (apiEndpointUrl) {
+                self.api.getJson(apiEndpointUrl,
                         function(content) {
                             return self.onContentLoaded(content).then(function() {
                                 dfd.resolve();
@@ -593,7 +601,7 @@ define([
             } else {
                 dfd.resolve();
             }
-        }
+        };
 
         return ContentEditPageBaseViewModel;
     });
