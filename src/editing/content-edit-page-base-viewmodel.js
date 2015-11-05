@@ -19,7 +19,7 @@ define([
         'use strict';
 
         var defaultSettings = {
-            tinyMcePropertyNames: [],
+            tinymcePropertyNames: [],
             observableValueObjects: [],
             alikeArraysPropertyNames: [],
             quitConfirmMessage: 'Si vous quitter cette page, vos changements seront perdus.',
@@ -177,7 +177,7 @@ define([
             return self.isEqual(
                 self.originalModelSnapshot(),
                 self.takeCurrentModelSnapshot(),
-                self.settings.tinyMcePropertyNames,
+                self.settings.tinymcePropertyNames,
                 self.settings.alikeArraysPropertyNames
             ) === false;
         };
@@ -283,18 +283,18 @@ define([
             var self = this;
             var modelSnapshot = self.getModelSnapshot();
 
-            for (var i = 0; i < self.settings.tinyMcePropertyNames.length; i++) {
-                var propertyName = self.settings.tinyMcePropertyNames[i];
+            for (var i = 0; i < self.settings.tinymcePropertyNames.length; i++) {
+                var propertyName = self.settings.tinymcePropertyNames[i];
 
                 if (modelSnapshot.hasOwnProperty(propertyName)) {
-                    modelSnapshot[propertyName] = self.clearContentFromTinyMceSpecificMarkup(modelSnapshot[propertyName]);
+                    modelSnapshot[propertyName] = self.clearContentFromTinymceSpecificMarkup(modelSnapshot[propertyName]);
                 }
             }
 
             return modelSnapshot;
         };
 
-        ContentEditPageBaseViewModel.prototype.clearContentFromTinyMceSpecificMarkup = function(tinymceContnet) {
+        ContentEditPageBaseViewModel.prototype.clearContentFromTinymceSpecificMarkup = function(tinymceContnet) {
             //var self = this;
 
             var $buffer = $('<div>');
@@ -327,7 +327,7 @@ define([
             var self = this;
             var apiEndpointUrl;
 
-            if(id){
+            if (id) {
                 apiEndpointUrl = self.apiResourceName + '/' + id;
             }
 
@@ -365,6 +365,14 @@ define([
         ContentEditPageBaseViewModel.prototype.onContentLoadedInner = function(content) {
             var self = this;
 
+            self.updateObservableContent(content);
+
+            self.takeOriginalModelSnapshot();
+        };
+
+        ContentEditPageBaseViewModel.prototype.updateObservableContent = function(content) {
+            var self = this;
+
             var adaptedContentFromServer = self.fromInputModel(content);
 
             var mapping = {};
@@ -374,12 +382,9 @@ define([
             self.updateMapping(mapping);
 
             ko.mapping.fromJS(adaptedContentFromServer, mapping, self.observableContent);
-
-            self.takeOriginalModelSnapshot();
         };
 
-        ContentEditPageBaseViewModel.prototype.updateMapping = function(mapping) {
-        };
+        ContentEditPageBaseViewModel.prototype.updateMapping = function(mapping) {};
 
         ContentEditPageBaseViewModel.prototype.fromInputModel = function(inputModel) {
             return inputModel;
@@ -389,13 +394,13 @@ define([
             var self = this;
 
             self.loadContent(id, dfd).then(function() {
-                var route = router.context().route;
+                var route = router.viewModel().route;
 
                 var url = self.apiResourceName + '/edit';
 
                 var defaultOptions = {
                     url: route.url.replace(new RegExp(url, 'i'), url + '/' + id),
-                    pageTitle: router.context().pageTitle,
+                    pageTitle: router.viewModel().pageTitle,
                     stateObject: {},
                     replace: true
                 };
@@ -563,8 +568,7 @@ define([
             $(window).on('beforeunload.editpage', self.onBeforeUnload.bind(self));
         };
 
-        //TODO: Utiliser de l'héritage & call base dans la fonction qui override au lieu de nommer cette fonction baseDispose
-        ContentEditPageBaseViewModel.prototype.baseDispose = function() {
+        ContentEditPageBaseViewModel.prototype.dispose = function() {
             var self = this;
 
             $(window).off('beforeunload.editpage');

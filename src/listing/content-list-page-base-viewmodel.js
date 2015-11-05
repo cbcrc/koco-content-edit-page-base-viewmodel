@@ -185,7 +185,7 @@ define([
         ContentListPageBaseViewModel.prototype.getUrlWithUpdatedQueryString = function() {
             var self = this;
 
-            var route = !router.isActivating() && router.context() ? router.context().route : self.route;
+            var route = !router.isActivating() && router.viewModel() ? router.viewModel().route : self.route;
             var routeUrl = route.url;
             var currentQuery = new Query(route.url);
             var currentQueryString = currentQuery.toString();
