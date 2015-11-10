@@ -78,6 +78,37 @@ define([
             self.disposer.add(self.content);
         };
 
+        ContentEditPageBaseViewModel.prototype.activate = function() {
+            var self = this;
+
+            return new $.Deferred(function(dfd) {
+                try {
+                    var id = self.route.urlParams[0].id;
+             
+
+                    self.loadLookups()
+                        .then(function() {
+                            return self.loadContent(id).then(function() {
+                                return self.afterContentLoaded().then(function() {
+                                    self.finalize();
+                                    dfd.resolve();
+                                });
+                            });
+                        }).fail(function(jqXHR, textStatus, errorThrown) {
+                            if (jqXHR.status === 404 || errorThrown === 'Not Found') {
+                                dfd.reject(404);
+                            } else {
+                                //TODO: Handle better
+                                self.handleUnknownError(jqXHR, textStatus, errorThrown);
+                                dfd.reject(errorThrown);
+                            }
+                        });
+                } catch (err) {
+                    dfd.reject(err);
+                }
+            }).promise();
+        };
+
         ContentEditPageBaseViewModel.prototype.getId = function() {
             var self = this;
 

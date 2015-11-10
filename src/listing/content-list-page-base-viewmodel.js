@@ -43,6 +43,36 @@ define([
         ContentListPageBaseViewModel.prototype = Object.create(ListBaseViewModel.prototype);
         ContentListPageBaseViewModel.prototype.contructor = ContentListPageBaseViewModel;
 
+        ContentListPageBaseViewModel.prototype.activate = function() {
+            var self = this;
+
+            return new $.Deferred(function(dfd) {
+                try {
+
+                    self.loadLookups()
+                        .then(function() {
+                            self.skipUpdateUrlOneTime = true;
+
+                            return self.initSearchArgumentsAndPagingInfoOuter().then(function() {
+                                return self.searchWithFilters().then(function() {
+                                    dfd.resolve();
+                                });
+                            });
+                        }).fail(function(jqXHR, textStatus, errorThrown) {
+                            if (jqXHR.status === 404  || errorThrown === 'Not Found') {
+                                dfd.reject(404);
+                            } else {
+                                //TODO: Handle better
+                                self.handleUnknownError(jqXHR, textStatus, errorThrown);
+                                dfd.reject(errorThrown);
+                            }
+                        });
+
+                } catch (err) {
+                    dfd.reject(err);
+                }
+            }).promise();
+        };
 
         ContentListPageBaseViewModel.prototype.getCurrentQueryString = function() {
             var self = this;
@@ -52,8 +82,6 @@ define([
 
             return $.param(cleanedArguments);
         };
-
-
 
         ContentListPageBaseViewModel.prototype.onSearchSuccess = function(searchResult) {
             var self = this;
@@ -71,7 +99,6 @@ define([
             self.updateReturnToQueryString();
 
             ListBaseViewModel.prototype.onSearchSuccess.call(self, searchResult);
-
         };
 
         ContentListPageBaseViewModel.prototype.updateReturnToQueryString = function() {
