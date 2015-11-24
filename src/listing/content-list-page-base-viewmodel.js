@@ -48,18 +48,17 @@ define([
 
             return new $.Deferred(function(dfd) {
                 try {
-
                     self.loadLookups()
                         .then(function() {
                             self.skipUpdateUrlOneTime = true;
 
-                            return self.initSearchArgumentsAndPagingInfoOuter().then(function() {
+                            return self.initSearchArgumentsAndPagingInfo().then(function() {
                                 return self.searchWithFilters().then(function() {
                                     dfd.resolve();
                                 });
                             });
                         }).fail(function(jqXHR, textStatus, errorThrown) {
-                            if (jqXHR.status === 404  || errorThrown === 'Not Found') {
+                            if (jqXHR.status === 404 || errorThrown === 'Not Found') {
                                 dfd.reject(404);
                             } else {
                                 //TODO: Handle better
@@ -67,7 +66,6 @@ define([
                                 dfd.reject(errorThrown);
                             }
                         });
-
                 } catch (err) {
                     dfd.reject(err);
                 }
@@ -157,38 +155,32 @@ define([
             }).promise();
         };
 
-        ContentListPageBaseViewModel.prototype.initSearchArgumentsAndPagingInfoOuter = function() {
+        ContentListPageBaseViewModel.prototype.initSearchArgumentsAndPagingInfo = function() {
             var self = this;
 
             return new $.Deferred(function(dfd) {
                 try {
-                    self.initSearchArgumentsAndPagingInfo(dfd);
+                    var currentQueryParams = new Query(self.route.url).params;
+                    if (currentQueryParams && !_.isEmpty(currentQueryParams)) {
+
+                        if (self.settings.pageable) {
+                            updatePagingInfoFromQueryParams(self, currentQueryParams);
+                        }
+
+                        self.deserializeSearchArguments(currentQueryParams).then(function(deserializedSearchArguments) {
+                            var searchArguments = objectUtilities.pickInBoth(deserializedSearchArguments.params, self.settings.defaultSearchArguments);
+
+                            ko.mapping.fromJS(searchArguments, self.searchArguments);
+
+                            dfd.resolve();
+                        });
+                    } else {
+                        dfd.resolve();
+                    }
                 } catch (err) {
                     dfd.reject(err);
                 }
             }).promise();
-        };
-
-        ContentListPageBaseViewModel.prototype.initSearchArgumentsAndPagingInfo = function(dfd) {
-            var self = this;
-
-            var currentQueryParams = new Query(self.route.url).params;
-            if (currentQueryParams && !_.isEmpty(currentQueryParams)) {
-
-                if (self.settings.pageable) {
-                    updatePagingInfoFromQueryParams(self, currentQueryParams);
-                }
-
-                self.deserializeSearchArguments(currentQueryParams).then(function(deserializedSearchArguments) {
-                    var searchArguments = objectUtilities.pickInBoth(deserializedSearchArguments.params, self.settings.defaultSearchArguments);
-
-                    ko.mapping.fromJS(searchArguments, self.searchArguments);
-
-                    dfd.resolve();
-                });
-            } else {
-                dfd.resolve();
-            }
         };
 
         function updatePagingInfoFromQueryParams(self, queryParams) {

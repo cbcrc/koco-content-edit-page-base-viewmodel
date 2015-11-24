@@ -47,6 +47,7 @@ define([
             }
 
             self.settings = $.extend({}, defaultSettings, settings);
+            self.ignoreDispose = false;
 
             self.apiQueryParams = self.settings.apiQueryParams;
 
@@ -84,7 +85,6 @@ define([
             return new $.Deferred(function(dfd) {
                 try {
                     var id = self.route.urlParams[0].id;
-             
 
                     self.loadLookups()
                         .then(function() {
@@ -149,29 +149,13 @@ define([
         ContentEditPageBaseViewModel.prototype.save = function(options) {
             var self = this;
 
-            var promise = $.Deferred(function(dfd) {
-                try {
-                    self.serverSideValidationErrors([]);
+            self.serverSideValidationErrors([]);
 
-                    self.validate().then(function(isValid) {
-                        if (isValid) {
-                            self.saveInner(dfd, options);
-                        } else {
-                            dfd.resolve();
-                        }
-                    }).fail(function() {
-                        dfd.reject.apply(self, arguments);
-                    });
-                } catch (error) {
-                    dfd.reject.apply(self, arguments);
+            return self.validate().then(function(isValid) {
+                if (isValid) {
+                    return self.saveInner(options);
                 }
-            }).promise();
-
-            promise.fail(function( /*error*/ ) {
-                self.handleUnknownError.apply(self, arguments);
             });
-
-            return promise;
         };
 
         ContentEditPageBaseViewModel.prototype.validate = function() {
@@ -194,7 +178,7 @@ define([
             return validationUtilities.validateObservables(self.validatedObservables);
         };
 
-        ContentEditPageBaseViewModel.prototype.toOutputModel = function(saveOptions) {
+        ContentEditPageBaseViewModel.prototype.toOutputModel = function( /*saveOptions*/ ) {
             var self = this;
 
             var content = mappingUtilities.toJS(self.observableContent);
@@ -354,7 +338,7 @@ define([
             return modelSnapshot;
         };
 
-        ContentEditPageBaseViewModel.prototype.loadContent = function(id, dfd) {
+        ContentEditPageBaseViewModel.prototype.loadContent = function(id) {
             var self = this;
             var apiEndpointUrl;
 
@@ -362,19 +346,7 @@ define([
                 apiEndpointUrl = self.apiResourceName + '/' + id;
             }
 
-            if (dfd) {
-                self.loadContentInner(apiEndpointUrl, dfd);
-                return dfd;
-            }
-
-            return $.Deferred(function(dfd) {
-                try {
-                    self.loadContentInner(apiEndpointUrl, dfd);
-                } catch (error) {
-                    dfd.reject(error);
-                }
-
-            }).promise();
+            return self.loadContentInner(apiEndpointUrl);
         };
 
         ContentEditPageBaseViewModel.prototype.loadLookups = function() {
@@ -388,17 +360,17 @@ define([
         ContentEditPageBaseViewModel.prototype.onContentLoaded = function(content) {
             var self = this;
 
-            self.onContentLoadedInner(content);
+            return $.Deferred(function(dfd) {
+                try {
+                    self.updateObservableContent(content);
 
-            return $.Deferred().resolve().promise();
-        };
+                    self.takeOriginalModelSnapshot();
 
-        ContentEditPageBaseViewModel.prototype.onContentLoadedInner = function(content) {
-            var self = this;
-
-            self.updateObservableContent(content);
-
-            self.takeOriginalModelSnapshot();
+                    dfd.resolve();
+                } catch (error) {
+                    dfd.reject.apply(self, arguments);
+                }
+            }).promise();
         };
 
         ContentEditPageBaseViewModel.prototype.updateObservableContent = function(content) {
@@ -415,16 +387,16 @@ define([
             ko.mapping.fromJS(adaptedContentFromServer, mapping, self.observableContent);
         };
 
-        ContentEditPageBaseViewModel.prototype.updateMapping = function(mapping) {};
+        ContentEditPageBaseViewModel.prototype.updateMapping = function( /*mapping*/ ) {};
 
         ContentEditPageBaseViewModel.prototype.fromInputModel = function(inputModel) {
             return inputModel;
         };
 
-        ContentEditPageBaseViewModel.prototype.reload = function(id, dfd) {
+        ContentEditPageBaseViewModel.prototype.reload = function(id) {
             var self = this;
 
-            self.loadContent(id, dfd).then(function() {
+            return self.loadContent(id).then(function() {
                 var route = router.viewModel().route;
 
                 var url = self.apiResourceName + '/edit';
@@ -438,31 +410,23 @@ define([
 
                 router.setUrlSilently(defaultOptions);
 
-                $('html, body').animate({
-                    scrollTop: 0
-                }, 'slow', function() {
-
-                });
-
-                $('.nav-tabs a').first().click();
-
-                //TODO: Faire en sorte qu'on résoude le dfd ici plutôt que dans loadContent
+                return self.refresh();
             });
         };
 
-        ContentEditPageBaseViewModel.prototype.create = function(writeModel, dfd, options) {
+        ContentEditPageBaseViewModel.prototype.create = function(writeModel /*, options*/ ) {
             var self = this;
 
-            self.api.postJson(self.apiResourceName, writeModel)
+            return self.api.postJson(self.apiResourceName, writeModel)
                 .fail(function(jqXhr, textStatus, errorThrown) {
-                    self.onCreateFail(dfd, jqXhr, textStatus, errorThrown);
+                    return self.onCreateFail(jqXhr, textStatus, errorThrown);
                 })
-                .success(function(data, textStatus, jqXhr) {
-                    self.onCreateSuccess(dfd, data, textStatus, jqXhr);
+                .then(function(data, textStatus, jqXhr) {
+                    return self.onCreateSuccess(data, textStatus, jqXhr);
                 });
         };
 
-        ContentEditPageBaseViewModel.prototype.update = function(writeModel, dfd, options) {
+        ContentEditPageBaseViewModel.prototype.update = function(writeModel /*, options*/ ) {
             var self = this,
                 id = self.getId(),
                 queryParams = '';
@@ -471,58 +435,69 @@ define([
                 queryParams = '?' + $.param(self.apiQueryParams, true);
             }
 
-            self.api.putJson(self.apiResourceName + '/' + id + queryParams, writeModel)
+            return self.api.putJson(self.apiResourceName + '/' + id + queryParams, writeModel)
                 .fail(function(jqXhr, textStatus, errorThrown) {
-                    self.onUpdateFail(dfd, writeModel, id, jqXhr, textStatus, errorThrown);
+                    return self.onUpdateFail(writeModel, id, jqXhr, textStatus, errorThrown);
                 })
                 .success(function(data, textStatus, jqXhr) {
-                    self.onUpdateSuccess(id, dfd, data, textStatus, jqXhr);
+                    return self.onUpdateSuccess(id, data, textStatus, jqXhr);
                 });
         };
 
-        ContentEditPageBaseViewModel.prototype.onCreateSuccess = function(dfd, id) {
+        ContentEditPageBaseViewModel.prototype.onCreateSuccess = function(id) {
             var self = this;
 
             self.isChangesWillBeLostConfirmationDisabled = true;
             toastr.success(self.settings.contentCreatedMessage);
 
-            self.reload(id, dfd);
+            return self.reload(id);
         };
 
-        ContentEditPageBaseViewModel.prototype.onUpdateFail = function(dfd, writeModel, id, jqXhr, textStatus, errorThrown) {
+        ContentEditPageBaseViewModel.prototype.refresh = function() {
+            var self = this;
+
+            return $.Deferred(function(dfd) {
+                try {
+                    //hack!!! - todo: router to be the creator of the viewmodel - refactoring maxime
+                    self.ignoreDispose = true;
+                    //hack pour rafraichir le formulaire car certain components ne supportent pas bien le two-way data binding!!!! - problematique!
+                    var viewModel = router.viewModel();
+                    router.viewModel(viewModel);
+                    dfd.resolve();
+                } catch (error) {
+                    dfd.reject.apply(self, arguments);
+                }
+            }).promise();
+        };
+
+        ContentEditPageBaseViewModel.prototype.onUpdateFail = function(writeModel, id, jqXhr, textStatus, errorThrown) {
             var self = this;
 
             switch (jqXhr.status) {
                 case 400:
-                    self.handleServerValidationErrors(jqXhr.responseJSON, dfd);
-                    break;
+                    return self.handleServerValidationErrors(jqXhr.responseJSON);
+
                 case 406:
-                    self.handleServerValidationErrors([jqXhr.responseJSON], dfd);
-                    break;
+                    return self.handleServerValidationErrors([jqXhr.responseJSON]);
+
                 case 409: //Version conflict
-                    self.handleSaveConflict(writeModel, jqXhr.responseJSON, dfd);
-                    break;
+                    return self.handleSaveConflict(writeModel, jqXhr.responseJSON);
+
                 default:
-                    self.handleUnknownError(jqXhr, textStatus, errorThrown);
-                    dfd.resolve();
-                    break;
+                    return self.handleUnknownError(jqXhr, textStatus, errorThrown);
             }
         };
 
-        ContentEditPageBaseViewModel.prototype.onCreateFail = function(dfd, jqXhr, textStatus, errorThrown) {
+        ContentEditPageBaseViewModel.prototype.onCreateFail = function(jqXhr, textStatus, errorThrown) {
             var self = this;
 
             switch (jqXhr.status) {
                 case 400:
-                    self.handleServerValidationErrors(jqXhr.responseJSON, dfd);
-                    break;
+                    return self.handleServerValidationErrors(jqXhr.responseJSON);
                 case 406:
-                    self.handleServerValidationErrors([jqXhr.responseJSON], dfd);
-                    break;
+                    return self.handleServerValidationErrors([jqXhr.responseJSON]);
                 default:
-                    self.handleUnknownError(jqXhr, textStatus, errorThrown);
-                    dfd.resolve();
-                    break;
+                    return self.handleUnknownError(jqXhr, textStatus, errorThrown);
             }
         };
 
@@ -531,18 +506,21 @@ define([
             toastr.error(self.settings.unknownErrorMessage + errorThrown);
         };
 
-        ContentEditPageBaseViewModel.prototype.onUpdateSuccess = function(id, dfd /*, data, textStatus, jqXhr*/ ) {
+        ContentEditPageBaseViewModel.prototype.onUpdateSuccess = function(id /*, data, textStatus, jqXhr*/ ) {
             var self = this;
 
             toastr.success(self.settings.contentUpdatedMessage);
-            self.loadContent(id, dfd);
+
+            return self.loadContent(id);
         };
 
-        ContentEditPageBaseViewModel.prototype.handleSaveConflict = function(writeModel, conflictInfo, dfd) {
-            var self = this;
+        ContentEditPageBaseViewModel.prototype.handleSaveConflict = function( /*writeModel, conflictInfo*/ ) {
+            //var self = this;
+
+            return;
         };
 
-        ContentEditPageBaseViewModel.prototype.handleServerValidationErrors = function(errors, dfd) {
+        ContentEditPageBaseViewModel.prototype.handleServerValidationErrors = function(errors) {
             var self = this;
             //On affiche seulement les erreurs globales (key = '') pour l'instant
             //TODO: Vider les erreurs avant de commencer ?
@@ -557,24 +535,30 @@ define([
 
             if (arrayUtilities.isNotEmptyArray(finalErrors)) {
                 self.serverSideValidationErrors(finalErrors);
-                self.prepareScreenForValidationErrors(dfd);
-            } else {
-                dfd.resolve();
+                return self.prepareScreenForValidationErrors();
             }
+
+            return;
         };
 
-        ContentEditPageBaseViewModel.prototype.prepareScreenForValidationErrors = function(dfd) {
+        ContentEditPageBaseViewModel.prototype.prepareScreenForValidationErrors = function() {
             var self = this;
 
-            toastr.error(self.settings.validationErrorsMessage);
+            return $.Deferred(function(dfd) {
+                try {
+                    toastr.error(self.settings.validationErrorsMessage);
 
-            if (self.selectFirstTabWithValidationErrors) {
-                self.selectFirstTabWithValidationErrors();
-            }
+                    if (self.selectFirstTabWithValidationErrors) {
+                        self.selectFirstTabWithValidationErrors();
+                    }
 
-            $('html, body').animate({
-                scrollTop: 0
-            }, dfd ? dfd.resolve : null);
+                    $('html, body').animate({
+                        scrollTop: 0
+                    }, dfd.resolve);
+                } catch (error) {
+                    dfd.reject.apply(self, arguments);
+                }
+            }).promise();
         };
 
         ContentEditPageBaseViewModel.prototype.selectFirstTabWithValidationErrors = function() {
@@ -602,24 +586,30 @@ define([
         ContentEditPageBaseViewModel.prototype.dispose = function() {
             var self = this;
 
-            $(window).off('beforeunload.editpage');
-            router.navigating.unsubscribe(self.canNavigate, self);
-            self.disposer.dispose();
+            if (!self.ignoreDispose) {
+                $(window).off('beforeunload.editpage');
+                router.navigating.unsubscribe(self.canNavigate, self);
+                self.disposer.dispose();
+            }
+
+            self.ignoreDispose = false;
         };
 
-        ContentEditPageBaseViewModel.prototype.saveInner = function(dfd, options) {
+        ContentEditPageBaseViewModel.prototype.saveInner = function(options) {
             var self = this;
+
             var writeModel = self.toOutputModel(options);
 
             if (self.editMode() === 'create') {
-                self.create(writeModel, dfd, options);
+                return self.create(writeModel, options);
             } else {
-                self.update(writeModel, dfd, options);
+                return self.update(writeModel, options);
             }
         };
 
-        ContentEditPageBaseViewModel.prototype.loadContentInner = function(apiEndpointUrl, dfd) {
+        ContentEditPageBaseViewModel.prototype.loadContentInner = function(apiEndpointUrl) {
             var self = this;
+
             var dataParams = null;
 
             if (self.apiQueryParams) {
@@ -629,18 +619,10 @@ define([
             }
 
             if (apiEndpointUrl) {
-                self.api.getJson(apiEndpointUrl,
-                        function(content) {
-                            return self.onContentLoaded(content).then(function() {
-                                dfd.resolve();
-                            });
-                        },
-                        dataParams)
-                    .fail(function(jqXHR, textStatus, errorThrown) {
-                        dfd.reject(jqXHR, textStatus, errorThrown);
-                    });
-            } else {
-                dfd.resolve();
+                return self.api.getJson(apiEndpointUrl, dataParams)
+                    .then(function(content) {
+                        return self.onContentLoaded(content);
+                });
             }
         };
 
