@@ -624,6 +624,8 @@ define([
                         return self.onContentLoaded(content);
                 });
             }
+
+            return $.Deferred().resolve().promise();
         };
 
         return ContentEditPageBaseViewModel;
