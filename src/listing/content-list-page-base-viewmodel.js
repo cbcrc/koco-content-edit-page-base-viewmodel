@@ -54,10 +54,10 @@ define([
                             self.skipUpdateUrlOneTime = true;
 
                             return self.initSearchArgumentsAndPagingInfo().then(function() {
-                                return self.searchWithFilters().then(function() {
-                                    dfd.resolve();
-                                });
+                                return self.searchWithFilters();
                             });
+                        }).then(function(){
+                            dfd.resolve();
                         }).fail(function(jqXHR, textStatus, errorThrown) {
                             if (jqXHR.status === 404 || errorThrown === 'Not Found') {
                                 dfd.reject(404);
