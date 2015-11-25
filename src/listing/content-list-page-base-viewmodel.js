@@ -43,6 +43,7 @@ define([
         ContentListPageBaseViewModel.prototype = Object.create(ListBaseViewModel.prototype);
         ContentListPageBaseViewModel.prototype.contructor = ContentListPageBaseViewModel;
 
+        //todo: rename async here & inside router
         ContentListPageBaseViewModel.prototype.activate = function() {
             var self = this;
 
@@ -81,6 +82,7 @@ define([
             return $.param(cleanedArguments);
         };
 
+        //todo: rename async
         ContentListPageBaseViewModel.prototype.onSearchSuccess = function(searchResult) {
             var self = this;
 
@@ -96,7 +98,7 @@ define([
 
             self.updateReturnToQueryString();
 
-            ListBaseViewModel.prototype.onSearchSuccess.call(self, searchResult);
+            return ListBaseViewModel.prototype.onSearchSuccess.call(self, searchResult);
         };
 
         ContentListPageBaseViewModel.prototype.updateReturnToQueryString = function() {
@@ -109,23 +111,20 @@ define([
             self.returnToQueryString($.param(queryParams));
         };
 
+        //todo: rename async
         ContentListPageBaseViewModel.prototype.searchByKeywords = function() {
             var self = this;
 
-            self.searchWithFilters();
+            return self.searchWithFilters();
         };
 
+        //todo: rename async
         ContentListPageBaseViewModel.prototype.goToNextPage = function() {
-
             var self = this;
 
-
-            var search = ListBaseViewModel.prototype.goToNextPage.call(self);
-            search.always(function() {
+            return ListBaseViewModel.prototype.goToNextPage.call(self).always(function() {
                 self.isPaging(false);
             });
-
-            return search;
         };
 
         ContentListPageBaseViewModel.prototype.addPropertiesToSearchResultItem = function(item) {
@@ -143,18 +142,19 @@ define([
             });
         };
 
+        //todo: rename async
         ContentListPageBaseViewModel.prototype.loadLookups = function() {
-            return new $.Deferred(function(dfd) {
-                dfd.resolve();
-            }).promise();
+            return $.Deferred().resolve().promise();
         };
 
+        //todo: rename async
         ContentListPageBaseViewModel.prototype.deserializeSearchArguments = function(serializedSearchArguments) {
             return new $.Deferred(function(dfd) {
                 dfd.resolve(serializedSearchArguments);
             }).promise();
         };
 
+        //todo: rename async
         ContentListPageBaseViewModel.prototype.initSearchArgumentsAndPagingInfo = function() {
             var self = this;
 
@@ -189,8 +189,6 @@ define([
             pagingArguments = $.extend({}, pagingArguments, objectUtilities.pickInBoth(queryParams, pagingArguments));
             self.pagingArguments(pagingArguments);
         }
-
-
 
         ContentListPageBaseViewModel.prototype.updateUrlWithSearchArguments = function() {
             var self = this;

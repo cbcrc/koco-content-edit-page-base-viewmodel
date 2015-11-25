@@ -79,6 +79,7 @@ define([
             self.disposer.add(self.content);
         };
 
+        //todo: rename async here & inside router
         ContentEditPageBaseViewModel.prototype.activate = function() {
             var self = this;
 
@@ -115,6 +116,7 @@ define([
             return self.observableContent().id();
         };
 
+        //todo: rename async
         ContentEditPageBaseViewModel.prototype.canNavigate = function() {
             var self = this;
 
@@ -146,6 +148,7 @@ define([
             return self.settings.quitConfirmMessage;
         };
 
+        //todo: rename async
         ContentEditPageBaseViewModel.prototype.save = function(options) {
             var self = this;
 
@@ -158,20 +161,19 @@ define([
             });
         };
 
+        //todo: rename async
         ContentEditPageBaseViewModel.prototype.validate = function() {
             var self = this;
 
-            var promise = self.validateInner();
-
-            promise.then(function(isValid) {
-                if (!isValid) {
-                    self.prepareScreenForValidationErrors();
-                }
+            return self.validateInner()
+                .then(function(isValid) {
+                    if (!isValid) {
+                        return self.prepareScreenForValidationErrors();
+                    }
             });
-
-            return promise;
         };
 
+        //todo: rename async
         ContentEditPageBaseViewModel.prototype.validateInner = function() {
             var self = this;
 
@@ -185,6 +187,8 @@ define([
 
             return content;
         };
+
+        /******** todo: extraire logique de isEqual pour contenu *********/
 
         ContentEditPageBaseViewModel.prototype.hasModelChanged = function() {
             var self = this;
@@ -294,6 +298,9 @@ define([
             return _.isEqual(val1, val2);
         };
 
+        /*************************************************************/
+
+
         ContentEditPageBaseViewModel.prototype.takeCurrentModelSnapshot = function() {
             var self = this;
             var modelSnapshot = self.getModelSnapshot();
@@ -338,6 +345,7 @@ define([
             return modelSnapshot;
         };
 
+        //todo: rename async
         ContentEditPageBaseViewModel.prototype.loadContent = function(id) {
             var self = this;
             var apiEndpointUrl;
@@ -349,21 +357,23 @@ define([
             return self.loadContentInner(apiEndpointUrl);
         };
 
+        //todo: rename async
         ContentEditPageBaseViewModel.prototype.loadLookups = function() {
             return $.Deferred().resolve().promise();
         };
 
+        //todo: rename async
         ContentEditPageBaseViewModel.prototype.afterContentLoaded = function() {
             return $.Deferred().resolve().promise();
         };
 
+        //todo: rename async
         ContentEditPageBaseViewModel.prototype.onContentLoaded = function(content) {
             var self = this;
 
             return $.Deferred(function(dfd) {
                 try {
                     self.updateObservableContent(content);
-
                     self.takeOriginalModelSnapshot();
 
                     dfd.resolve();
@@ -393,6 +403,7 @@ define([
             return inputModel;
         };
 
+        //todo: rename async
         ContentEditPageBaseViewModel.prototype.reload = function(id) {
             var self = this;
 
@@ -414,18 +425,19 @@ define([
             });
         };
 
+        //todo: rename async
         ContentEditPageBaseViewModel.prototype.create = function(writeModel /*, options*/ ) {
             var self = this;
 
             return self.api.postJson(self.apiResourceName, writeModel)
-                .fail(function(jqXhr, textStatus, errorThrown) {
-                    return self.onCreateFail(jqXhr, textStatus, errorThrown);
-                })
                 .then(function(data, textStatus, jqXhr) {
                     return self.onCreateSuccess(data, textStatus, jqXhr);
+                },function(jqXhr, textStatus, errorThrown) {
+                    return self.onCreateFail(jqXhr, textStatus, errorThrown);
                 });
         };
 
+        //todo: rename async
         ContentEditPageBaseViewModel.prototype.update = function(writeModel /*, options*/ ) {
             var self = this,
                 id = self.getId(),
@@ -436,14 +448,14 @@ define([
             }
 
             return self.api.putJson(self.apiResourceName + '/' + id + queryParams, writeModel)
-                .fail(function(jqXhr, textStatus, errorThrown) {
-                    return self.onUpdateFail(writeModel, id, jqXhr, textStatus, errorThrown);
-                })
-                .success(function(data, textStatus, jqXhr) {
+                .then(function(data, textStatus, jqXhr) {
                     return self.onUpdateSuccess(id, data, textStatus, jqXhr);
+                }, function(jqXhr, textStatus, errorThrown) {
+                    return self.onUpdateFail(writeModel, id, jqXhr, textStatus, errorThrown);
                 });
         };
 
+        //todo: rename async
         ContentEditPageBaseViewModel.prototype.onCreateSuccess = function(id) {
             var self = this;
 
@@ -453,6 +465,7 @@ define([
             return self.reload(id);
         };
 
+        //todo: rename async
         ContentEditPageBaseViewModel.prototype.refresh = function() {
             var self = this;
 
@@ -470,6 +483,7 @@ define([
             }).promise();
         };
 
+        //todo: rename async
         ContentEditPageBaseViewModel.prototype.onUpdateFail = function(writeModel, id, jqXhr, textStatus, errorThrown) {
             var self = this;
 
@@ -488,6 +502,7 @@ define([
             }
         };
 
+        //todo: rename async
         ContentEditPageBaseViewModel.prototype.onCreateFail = function(jqXhr, textStatus, errorThrown) {
             var self = this;
 
@@ -501,11 +516,16 @@ define([
             }
         };
 
+        //todo: rename async
         ContentEditPageBaseViewModel.prototype.handleUnknownError = function(jqXhr, textStatus, errorThrown) {
             var self = this;
+
             toastr.error(self.settings.unknownErrorMessage + errorThrown);
+
+            return $.Deferred().resolve().promise();
         };
 
+        //todo: rename async
         ContentEditPageBaseViewModel.prototype.onUpdateSuccess = function(id /*, data, textStatus, jqXhr*/ ) {
             var self = this;
 
@@ -514,12 +534,14 @@ define([
             return self.loadContent(id);
         };
 
+        //todo: rename async
         ContentEditPageBaseViewModel.prototype.handleSaveConflict = function( /*writeModel, conflictInfo*/ ) {
             //var self = this;
 
-            return;
+            return $.Deferred().resolve().promise();
         };
 
+        //todo: rename async
         ContentEditPageBaseViewModel.prototype.handleServerValidationErrors = function(errors) {
             var self = this;
             //On affiche seulement les erreurs globales (key = '') pour l'instant
@@ -538,9 +560,10 @@ define([
                 return self.prepareScreenForValidationErrors();
             }
 
-            return;
+            return $.Deferred().resolve().promise();
         };
 
+        //todo: rename async
         ContentEditPageBaseViewModel.prototype.prepareScreenForValidationErrors = function() {
             var self = this;
 
@@ -595,6 +618,7 @@ define([
             self.ignoreDispose = false;
         };
 
+        //todo: rename async
         ContentEditPageBaseViewModel.prototype.saveInner = function(options) {
             var self = this;
 
@@ -607,6 +631,7 @@ define([
             }
         };
 
+        //todo: rename async
         ContentEditPageBaseViewModel.prototype.loadContentInner = function(apiEndpointUrl) {
             var self = this;
 
