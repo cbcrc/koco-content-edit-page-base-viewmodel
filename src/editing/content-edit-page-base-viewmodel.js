@@ -164,13 +164,26 @@ define([
         //todo: rename async
         ContentEditPageBaseViewModel.prototype.validate = function() {
             var self = this;
+            var _isValid = false;
 
-            return self.validateInner()
-                .then(function(isValid) {
-                    if (!isValid) {
-                        return self.prepareScreenForValidationErrors();
-                    }
-            });
+            return $.Deferred(function(dfd) {
+                try {
+                    self.validateInner()
+                        .then(function(isValid) {
+                            _isValid = isValid;
+
+                            if (!isValid) {
+                                return self.prepareScreenForValidationErrors();
+                            }
+                        }).then(function() {
+                            dfd.resolve(_isValid);
+                        }).fail(function() {
+                            dfd.reject.apply(self, arguments);
+                        });
+                } catch (error) {
+                    dfd.reject.apply(self, arguments);
+                }
+            }).promise();
         };
 
         //todo: rename async
@@ -432,7 +445,7 @@ define([
             return self.api.postJson(self.apiResourceName, writeModel)
                 .then(function(data, textStatus, jqXhr) {
                     return self.onCreateSuccess(data, textStatus, jqXhr);
-                },function(jqXhr, textStatus, errorThrown) {
+                }, function(jqXhr, textStatus, errorThrown) {
                     return self.onCreateFail(jqXhr, textStatus, errorThrown);
                 });
         };
@@ -647,7 +660,7 @@ define([
                 return self.api.getJson(apiEndpointUrl, dataParams)
                     .then(function(content) {
                         return self.onContentLoaded(content);
-                });
+                    });
             }
 
             return $.Deferred().resolve().promise();
