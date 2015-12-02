@@ -622,13 +622,20 @@ define([
         ContentEditPageBaseViewModel.prototype.dispose = function() {
             var self = this;
 
+            //this sucks... a dirty hack...
             if (!self.ignoreDispose) {
-                $(window).off('beforeunload.editpage');
-                router.navigating.unsubscribe(self.canNavigate, self);
-                self.disposer.dispose();
+                self.disposeInner();
             }
 
             self.ignoreDispose = false;
+        };
+
+        ContentEditPageBaseViewModel.prototype.disposeInner = function() {
+            var self = this;
+
+            $(window).off('beforeunload.editpage');
+            router.navigating.unsubscribe(self.canNavigate, self);
+            self.disposer.dispose();
         };
 
         //todo: rename async
