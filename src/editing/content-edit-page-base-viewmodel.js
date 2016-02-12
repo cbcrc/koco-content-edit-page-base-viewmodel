@@ -269,12 +269,12 @@ define([
             }
 
             if (_.isArray(val1) || _.isArray(val2)) {
-                if (hasAlikeArraysPropertyNames && _.contains(alikeArraysPropertyNames, key)) {
+                if (hasAlikeArraysPropertyNames && _.includes(alikeArraysPropertyNames, key)) {
                     //humm... c'est bon ça!? comparaison boiteuse... pourquoi on fait ça donc? pour ne pas tenir compte de l'ordre des valeurs de l'array!?
                     return val1.length === val2.length && _.intersection(val1, val2).length === val1.length;
                 }
 
-                return val1.length === val2.length && _.all(val1, function(val, i) {
+                return val1.length === val2.length && _.every(val1, function(val, i) {
                     //pas de récursion pour les valeurs des array
                     return _.isEqual(val, val2[i]);
                 });
@@ -288,7 +288,7 @@ define([
                 }
             }
 
-            if (hasHtmlPropertyNames && _.contains(htmlPropertyNames, key)) {
+            if (hasHtmlPropertyNames && _.includes(htmlPropertyNames, key)) {
                 var html1, html2;
 
                 if (val1) {
