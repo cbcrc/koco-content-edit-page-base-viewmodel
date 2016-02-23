@@ -2,17 +2,17 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 define([
-        'knockout',
-        'jquery',
-        'lodash',
-        'mapping-utilities',
-        'url-utilities',
-        'router',
-        'toastr',
-        'modaler',
-        'array-utilities',
-        'validation-utilities',
-        'disposer'
+    'knockout',
+    'jquery',
+    'lodash',
+    'mapping-utilities',
+    'url-utilities',
+    'router',
+    'toastr',
+    'modaler',
+    'array-utilities',
+    'validation-utilities',
+    'disposer'
     ],
     function(ko, $, _, mappingUtilities, urlUtilities, router,
         toastr, modaler, arrayUtilities, validationUtilities, Disposer) {
@@ -20,7 +20,7 @@ define([
 
         var defaultSettings = {
             tinymcePropertyNames: [],
-            observableValueObjects: [],
+            observableValueObjects: null,
             alikeArraysPropertyNames: [],
             quitConfirmMessage: 'Si vous quitter cette page, vos changements seront perdus.',
             contentCreatedMessage: 'Le contenu a été sauvegardé.',
@@ -47,6 +47,7 @@ define([
             }
 
             self.settings = $.extend({}, defaultSettings, settings);
+
             self.ignoreDispose = false;
 
             self.apiQueryParams = self.settings.apiQueryParams;
@@ -55,7 +56,13 @@ define([
 
             self.disposer = new Disposer();
 
-            self.observableContent = ko.validatedObservable(observableContent);
+            self.mapping = self.settings.mapping || {};
+
+            if(self.settings.observableValueObjects){
+                mappingUtilities.mapAsObservableValueObjects(self.mapping, self.settings.observableValueObjects);
+            }
+
+            self.observableContent = ko.validatedObservable(ko.mapping.fromJS(observableContent, self.mapping));
             self.observableContent.extend({
                 bootstrapValidation: {}
             });
@@ -88,17 +95,17 @@ define([
                     var id = self.route.urlParams[0].id;
 
                     self.loadLookups()
-                        .then(function() {
-                            return self.loadContent(id).then(function() {
-                                return self.afterContentLoaded().then(function() {
-                                    self.finalize();
-                                    dfd.resolve();
-                                });
+                    .then(function() {
+                        return self.loadContent(id).then(function() {
+                            return self.afterContentLoaded().then(function() {
+                                self.finalize();
+                                dfd.resolve();
                             });
-                        }).fail(function(jqXHR, textStatus, errorThrown) {
-                            if (jqXHR.status === 404 || errorThrown === 'Not Found') {
-                                dfd.reject(404);
-                            } else {
+                        });
+                    }).fail(function(jqXHR, textStatus, errorThrown) {
+                        if (jqXHR.status === 404 || errorThrown === 'Not Found') {
+                            dfd.reject(404);
+                        } else {
                                 //TODO: Handle better
                                 self.handleUnknownError(jqXHR, textStatus, errorThrown);
                                 dfd.reject(errorThrown);
@@ -169,17 +176,17 @@ define([
             return $.Deferred(function(dfd) {
                 try {
                     self.validateInner()
-                        .then(function(isValid) {
-                            _isValid = isValid;
+                    .then(function(isValid) {
+                        _isValid = isValid;
 
-                            if (!isValid) {
-                                return self.prepareScreenForValidationErrors();
-                            }
-                        }).then(function() {
-                            dfd.resolve(_isValid);
-                        }).fail(function() {
-                            dfd.reject.apply(self, arguments);
-                        });
+                        if (!isValid) {
+                            return self.prepareScreenForValidationErrors();
+                        }
+                    }).then(function() {
+                        dfd.resolve(_isValid);
+                    }).fail(function() {
+                        dfd.reject.apply(self, arguments);
+                    });
                 } catch (error) {
                     dfd.reject.apply(self, arguments);
                 }
@@ -211,7 +218,7 @@ define([
                 self.takeCurrentModelSnapshot(),
                 self.settings.tinymcePropertyNames,
                 self.settings.alikeArraysPropertyNames
-            ) === false;
+                ) === false;
         };
 
         ContentEditPageBaseViewModel.prototype.isEqual = function(object, other, htmlPropertyNames, alikeArraysPropertyNames) {
@@ -401,16 +408,8 @@ define([
 
             var adaptedContentFromServer = self.fromInputModel(content);
 
-            var mapping = {};
-
-            mappingUtilities.mapAsObservableValueObjects(mapping, self.settings.observableValueObjects);
-
-            self.updateMapping(mapping);
-
-            ko.mapping.fromJS(adaptedContentFromServer, mapping, self.observableContent);
+            ko.mapping.fromJS(adaptedContentFromServer, self.mapping, self.observableContent);
         };
-
-        ContentEditPageBaseViewModel.prototype.updateMapping = function( /*mapping*/ ) {};
 
         ContentEditPageBaseViewModel.prototype.fromInputModel = function(inputModel) {
             return inputModel;
@@ -443,29 +442,29 @@ define([
             var self = this;
 
             return self.api.postJson(self.apiResourceName, writeModel)
-                .then(function(data, textStatus, jqXhr) {
-                    return self.onCreateSuccess(data, textStatus, jqXhr);
-                }, function(jqXhr, textStatus, errorThrown) {
-                    return self.onCreateFail(jqXhr, textStatus, errorThrown);
-                });
+            .then(function(data, textStatus, jqXhr) {
+                return self.onCreateSuccess(data, textStatus, jqXhr);
+            }, function(jqXhr, textStatus, errorThrown) {
+                return self.onCreateFail(jqXhr, textStatus, errorThrown);
+            });
         };
 
         //todo: rename async
         ContentEditPageBaseViewModel.prototype.update = function(writeModel /*, options*/ ) {
             var self = this,
-                id = self.getId(),
-                queryParams = '';
+            id = self.getId(),
+            queryParams = '';
 
             if (self.apiQueryParams) {
                 queryParams = '?' + $.param(self.apiQueryParams, true);
             }
 
             return self.api.putJson(self.apiResourceName + '/' + id + queryParams, writeModel)
-                .then(function(data, textStatus, jqXhr) {
-                    return self.onUpdateSuccess(id, data, textStatus, jqXhr);
-                }, function(jqXhr, textStatus, errorThrown) {
-                    return self.onUpdateFail(writeModel, id, jqXhr, textStatus, errorThrown);
-                });
+            .then(function(data, textStatus, jqXhr) {
+                return self.onUpdateSuccess(id, data, textStatus, jqXhr);
+            }, function(jqXhr, textStatus, errorThrown) {
+                return self.onUpdateFail(writeModel, id, jqXhr, textStatus, errorThrown);
+            });
         };
 
         //todo: rename async
@@ -502,16 +501,16 @@ define([
 
             switch (jqXhr.status) {
                 case 400:
-                    return self.handleServerValidationErrors(jqXhr.responseJSON);
+                return self.handleServerValidationErrors(jqXhr.responseJSON);
 
                 case 406:
-                    return self.handleServerValidationErrors([jqXhr.responseJSON]);
+                return self.handleServerValidationErrors([jqXhr.responseJSON]);
 
                 case 409: //Version conflict
-                    return self.handleSaveConflict(writeModel, jqXhr.responseJSON);
+                return self.handleSaveConflict(writeModel, jqXhr.responseJSON);
 
                 default:
-                    return self.handleUnknownError(jqXhr, textStatus, errorThrown);
+                return self.handleUnknownError(jqXhr, textStatus, errorThrown);
             }
         };
 
@@ -521,11 +520,11 @@ define([
 
             switch (jqXhr.status) {
                 case 400:
-                    return self.handleServerValidationErrors(jqXhr.responseJSON);
+                return self.handleServerValidationErrors(jqXhr.responseJSON);
                 case 406:
-                    return self.handleServerValidationErrors([jqXhr.responseJSON]);
+                return self.handleServerValidationErrors([jqXhr.responseJSON]);
                 default:
-                    return self.handleUnknownError(jqXhr, textStatus, errorThrown);
+                return self.handleUnknownError(jqXhr, textStatus, errorThrown);
             }
         };
 
@@ -665,9 +664,9 @@ define([
 
             if (apiEndpointUrl) {
                 return self.api.getJson(apiEndpointUrl, dataParams)
-                    .then(function(content) {
-                        return self.onContentLoaded(content);
-                    });
+                .then(function(content) {
+                    return self.onContentLoaded(content);
+                });
             }
 
             return $.Deferred().resolve().promise();
