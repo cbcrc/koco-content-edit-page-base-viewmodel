@@ -108,7 +108,7 @@ define([
                         } else {
                                 //TODO: Handle better
                                 self.handleUnknownError(jqXHR, textStatus, errorThrown);
-                                dfd.reject(errorThrown);
+                                dfd.reject(errorThrown || textStatus || jqXHR);
                             }
                         });
                 } catch (err) {
