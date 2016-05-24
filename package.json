@@ -1,39 +1,39 @@
 {
-    "name": "koco-content-management",
-    "version": "0.7.1",
-    "homepage": "https://github.com/cbcrc/koco-content-management",
-    "authors": [
-        "Maxime Séguin <maxime.forget-seguin@radio-canada.ca>"
-    ],
-    "description": "A set of utilities to help build a CMS",
-    "keywords": [
-        "koco",
-        "cms",
-        "content management",
-        "knockout"
-    ],
-    "scripts": {
-        "build": "rm -rf dist && mkdir dist && cp -r src/* dist && rm -rf dist/*.js && babel src --out-dir dist --modules umd --presets es2015,stage-0"
-    },
-    "license": "MIT",
-    "dependencies": {
-        "koco-object-utilities": "^0.1.0",
-        "koco-mapping-utilities": "^0.1.0",
-        "koco-url-utilities": "^0.3.0",
-        "koco-router": "^0.6.0",
-        "koco-validation": "^0.2.2",
-        "koco-array-utilities": "^0.1.1",
-        "jquery": "^2.1.4",
-        "lodash": "^4.0.1",
-        "knockout": "^3.3.0",
-        "toastr": "^2.1.1",
-        "requirejs": "^2.1.17",
-        "koco-toastr": "^0.3.0",
-        "koco-disposer": "^0.1.0",
-        "koco-list-base-viewmodel": "^0.2.5",
-        "koco-query": "^0.1.5"
-    },
-    "resolutions": {
-        "lodash": "^4.0.1"
-    }
+  "name": "koco-content-management",
+  "version": "1.0.0",
+  "homepage": "https://github.com/cbcrc/koco-content-management",
+  "authors": [
+    "Maxime Séguin <maxime.forget-seguin@radio-canada.ca>"
+  ],
+  "description": "A set of utilities to help build a CMS",
+  "keywords": [
+    "koco",
+    "cms",
+    "content management",
+    "knockout"
+  ],
+  "scripts": {
+    "build": "rm -rf dist && mkdir dist && cp -r src/* dist && rm -rf dist/*.js && babel src --out-dir dist --modules umd --presets es2015,stage-0"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "koco-object-utilities": "^0.1.0",
+    "koco-mapping-utilities": "^0.1.0",
+    "koco-url-utilities": "^0.3.0",
+    "koco-router": "^0.6.0",
+    "koco-validation": "^0.2.2",
+    "koco-array-utilities": "^0.1.1",
+    "jquery": "^2.1.4",
+    "lodash": "^4.0.1",
+    "knockout": "^3.3.0",
+    "toastr": "^2.1.1",
+    "requirejs": "^2.1.17",
+    "koco-toastr": "^0.3.0",
+    "koco-disposer": "^0.1.0",
+    "koco-list-base-viewmodel": "^0.2.5",
+    "koco-query": "^0.1.5"
+  },
+  "resolutions": {
+    "lodash": "^4.0.1"
+  }
 }
