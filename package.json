@@ -17,23 +17,27 @@
   },
   "license": "MIT",
   "dependencies": {
-    "koco-object-utilities": "^0.1.0",
-    "koco-mapping-utilities": "^0.1.0",
-    "koco-url-utilities": "^0.3.0",
-    "koco-router": "^0.6.0",
-    "koco-validation": "^0.2.2",
-    "koco-array-utilities": "^0.1.1",
-    "jquery": "^2.1.4",
-    "lodash": "^4.0.1",
-    "knockout": "^3.3.0",
-    "toastr": "^2.1.1",
-    "requirejs": "^2.1.17",
-    "koco-toastr": "^0.3.0",
-    "koco-disposer": "^0.1.0",
-    "koco-list-base-viewmodel": "^0.2.5",
-    "koco-query": "^0.1.5"
+    "jquery": "^2.2.4",
+    "knockout": "^3.4.0",
+    "koco": "^1.0.0",
+    "koco-array-utilities": "^1.1.0",
+    "koco-disposer": "^1.1.0",
+    "koco-list-base-viewmodel": "^1.1.0",
+    "koco-mapping-utilities": "^1.1.0",
+    "koco-object-utilities": "^1.1.0",
+    "koco-query": "^1.1.0",
+    "koco-toastr": "^1.1.0",
+    "koco-url-utilities": "^1.1.0",
+    "koco-validation": "^1.1.0",
+    "lodash": "^4.13.1",
+    "toastr": "^2.1.2"
   },
   "resolutions": {
-    "lodash": "^4.0.1"
+    "lodash": "^4.13.1"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.9.0",
+    "babel-preset-es2015": "^6.9.0",
+    "babel-preset-stage-0": "^6.5.0"
   }
 }
