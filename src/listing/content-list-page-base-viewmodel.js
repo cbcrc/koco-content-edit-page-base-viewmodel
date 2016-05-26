@@ -11,7 +11,7 @@ import objectUtilities from 'koco-object-utilities';
 import stringUtilities from 'koco-string-utilities';
 import mappingUtilities from 'koco-mapping-utilities';
 import Disposer from 'koco-disposer';
-import ListBaseViewModel from from 'koco-list-base-viewmodel';
+import ListBaseViewModel from 'koco-list-base-viewmodel';
 
 
 var ContentListPageBaseViewModel = function(api, apiResourceName, settings) {
