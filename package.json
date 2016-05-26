@@ -17,24 +17,27 @@
   },
   "license": "MIT",
   "dependencies": {
-    "jquery": "^2.2.4",
+    "jquery": "^2.1.4",
     "knockout": "^3.4.0",
-    "koco": "^1.0.0",
     "koco-array-utilities": "^1.1.0",
     "koco-disposer": "^1.1.0",
     "koco-list-base-viewmodel": "^1.1.0",
     "koco-mapping-utilities": "^1.1.0",
     "koco-object-utilities": "^1.1.0",
     "koco-query": "^1.1.0",
+    "koco-string-utilities": "^1.1.0",
     "koco-toastr": "^1.1.0",
     "koco-url-utilities": "^1.1.0",
     "koco-validation": "^1.1.0",
-    "lodash": "^4.13.1",
+    "lodash": "^4.6.1",
     "toastr": "^2.1.2"
+  },
+  "peerDependencies": {
+    "koco": "^1.0.0"
   },
   "main": "src/content-management.js",
   "resolutions": {
-    "lodash": "^4.13.1"
+    "lodash": "^4.6.1"
   },
   "devDependencies": {
     "babel-cli": "^6.9.0",

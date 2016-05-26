@@ -12,9 +12,9 @@ var _router = require('router');
 
 var _router2 = _interopRequireDefault(_router);
 
-var _urlUtilities = require('url-utilities');
+var _kocoUrlUtilities = require('koco-url-utilities');
 
-var _urlUtilities2 = _interopRequireDefault(_urlUtilities);
+var _kocoUrlUtilities2 = _interopRequireDefault(_kocoUrlUtilities);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -37,7 +37,7 @@ ContentManagement.prototype.registerContentPages = function (content, options) {
         withActivator: options.withActivator,
         title: options.editTitle
     });
-    _router2.default.addRoute(_urlUtilities2.default.patternWithQueryString(content + '/edit/:id:'), {
+    _router2.default.addRoute(_kocoUrlUtilities2.default.patternWithQueryString(content + '/edit/:id:'), {
         pageName: content + '-edit'
     });
     _router2.default.registerPage(content + '-list', {
@@ -45,7 +45,7 @@ ContentManagement.prototype.registerContentPages = function (content, options) {
         withActivator: true,
         title: options.listTitle
     });
-    _router2.default.addRoute(_urlUtilities2.default.patternWithQueryString(options.listContentName), {
+    _router2.default.addRoute(_kocoUrlUtilities2.default.patternWithQueryString(options.listContentName), {
         pageName: content + '-list'
     });
 };
