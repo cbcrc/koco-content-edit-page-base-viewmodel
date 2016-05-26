@@ -3,7 +3,7 @@
 
 import $ from 'jquery';
 import router from 'router';
-import urls from 'url-utilities';
+import urls from 'koco-url-utilities';
 
 
 

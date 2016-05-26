@@ -32,6 +32,7 @@
     "lodash": "^4.13.1",
     "toastr": "^2.1.2"
   },
+  "main": "src/content-management.js",
   "resolutions": {
     "lodash": "^4.13.1"
   },

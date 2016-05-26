@@ -4,14 +4,14 @@
 import ko from 'knockout';
 import $ from 'jquery';
 import _ from 'lodash';
-import mappingUtilities from 'mapping-utilities';
-import urlUtilities from 'url-utilities';
+import mappingUtilities from 'koco-mapping-utilities';
+import urlUtilities from 'koco-url-utilities';
 import router from 'router';
 import toastr from 'toastr';
-import modaler from 'modaler';
-import arrayUtilities from 'array-utilities';
+import modaler from 'koco-modaler';
+import arrayUtilities from 'koco-array-utilities';
 import validationUtilities from 'validation-utilities';
-import Disposer from 'disposer';
+import Disposer from 'koco-disposer';
 
 
 var defaultSettings = {

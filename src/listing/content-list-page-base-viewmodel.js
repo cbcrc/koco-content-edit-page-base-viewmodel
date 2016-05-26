@@ -4,14 +4,14 @@
 import ko from 'knockout';
 import $ from 'jquery';
 import _ from 'lodash';
-import urlUtilities from 'url-utilities';
+import urlUtilities from 'koco-url-utilities';
 import router from 'router';
-import Query from 'query';
-import objectUtilities from 'object-utilities';
-import stringUtilities from 'string-utilities';
-import mappingUtilities from 'mapping-utilities';
-import Disposer from 'disposer';
-import ListBaseViewModel from 'list-base-viewmodel';
+import Query from 'koco-query';
+import objectUtilities from 'koco-object-utilities';
+import stringUtilities from 'koco-string-utilities';
+import mappingUtilities from 'koco-mapping-utilities';
+import Disposer from 'koco-disposer';
+import ListBaseViewModel from from 'koco-list-base-viewmodel';
 
 
 var ContentListPageBaseViewModel = function(api, apiResourceName, settings) {
