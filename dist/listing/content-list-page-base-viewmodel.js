@@ -20,9 +20,9 @@ var _kocoUrlUtilities = require('koco-url-utilities');
 
 var _kocoUrlUtilities2 = _interopRequireDefault(_kocoUrlUtilities);
 
-var _router = require('router');
+var _koco = require('koco');
 
-var _router2 = _interopRequireDefault(_router);
+var _koco2 = _interopRequireDefault(_koco);
 
 var _kocoQuery = require('koco-query');
 
@@ -76,7 +76,7 @@ var ContentListPageBaseViewModel = function ContentListPageBaseViewModel(api, ap
 ContentListPageBaseViewModel.prototype = Object.create(_kocoListBaseViewmodel2.default.prototype);
 ContentListPageBaseViewModel.prototype.contructor = ContentListPageBaseViewModel;
 
-//todo: rename async here & inside router
+//todo: rename async here & inside koco.router
 ContentListPageBaseViewModel.prototype.activate = function () {
     var self = this;
 
@@ -225,7 +225,7 @@ function updatePagingInfoFromQueryParams(self, queryParams) {
 ContentListPageBaseViewModel.prototype.updateUrlWithSearchArguments = function () {
     var self = this;
 
-    _router2.default.setUrlSilently({
+    _koco2.default.router.setUrlSilently({
         url: self.getUrlWithUpdatedQueryString(),
         replace: true
     });
@@ -234,7 +234,7 @@ ContentListPageBaseViewModel.prototype.updateUrlWithSearchArguments = function (
 ContentListPageBaseViewModel.prototype.getUrlWithUpdatedQueryString = function () {
     var self = this;
 
-    var route = !_router2.default.isActivating() && _router2.default.viewModel() ? _router2.default.viewModel().route : self.route;
+    var route = !_koco2.default.router.isActivating() && _koco2.default.router.viewModel() ? _koco2.default.router.viewModel().route : self.route;
     var routeUrl = route.url;
     var currentQuery = new _kocoQuery2.default(route.url);
     var currentQueryString = currentQuery.toString();

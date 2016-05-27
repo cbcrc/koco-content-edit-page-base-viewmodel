@@ -24,9 +24,9 @@ var _kocoUrlUtilities = require('koco-url-utilities');
 
 var _kocoUrlUtilities2 = _interopRequireDefault(_kocoUrlUtilities);
 
-var _router = require('router');
+var _koco = require('koco');
 
-var _router2 = _interopRequireDefault(_router);
+var _koco2 = _interopRequireDefault(_koco);
 
 var _toastr = require('toastr');
 
@@ -119,7 +119,7 @@ var ContentEditPageBaseViewModel = function ContentEditPageBaseViewModel(api, ap
     self.disposer.add(self.content);
 };
 
-//todo: rename async here & inside router
+//todo: rename async here & inside koco.router
 ContentEditPageBaseViewModel.prototype.activate = function () {
     var self = this;
 
@@ -445,18 +445,18 @@ ContentEditPageBaseViewModel.prototype.reload = function (id) {
     var self = this;
 
     return self.loadContent(id).then(function () {
-        var route = _router2.default.viewModel().route;
+        var route = _koco2.default.router.viewModel().route;
 
         var url = self.apiResourceName + '/edit';
 
         var defaultOptions = {
             url: route.url.replace(new RegExp(url, 'i'), url + '/' + id),
-            pageTitle: _router2.default.viewModel().pageTitle,
+            pageTitle: _koco2.default.router.viewModel().pageTitle,
             stateObject: {},
             replace: true
         };
 
-        _router2.default.setUrlSilently(defaultOptions);
+        _koco2.default.router.setUrlSilently(defaultOptions);
 
         return self.refresh();
     });
@@ -506,11 +506,11 @@ ContentEditPageBaseViewModel.prototype.refresh = function () {
 
     return _jquery2.default.Deferred(function (dfd) {
         try {
-            //hack!!! - todo: router to be the creator of the viewmodel - refactoring maxime
+            //hack!!! - todo: koco.router to be the creator of the viewmodel - refactoring maxime
             self.ignoreDispose = true;
             //hack pour rafraichir le formulaire car certain components ne supportent pas bien le two-way data binding!!!! - problematique!
-            var viewModel = _router2.default.viewModel();
-            _router2.default.viewModel(viewModel);
+            var viewModel = _koco2.default.router.viewModel();
+            _koco2.default.router.viewModel(viewModel);
             dfd.resolve();
         } catch (error) {
             dfd.reject.apply(self, arguments);
@@ -638,7 +638,7 @@ ContentEditPageBaseViewModel.prototype.finalize = function () {
     var self = this;
 
     self.takeOriginalModelSnapshot();
-    _router2.default.navigating.subscribe(self.canNavigate, self);
+    _koco2.default.router.navigating.subscribe(self.canNavigate, self);
     (0, _jquery2.default)(window).on('beforeunload.editpage', self.onBeforeUnload.bind(self));
 };
 
@@ -657,7 +657,7 @@ ContentEditPageBaseViewModel.prototype.disposeInner = function () {
     var self = this;
 
     (0, _jquery2.default)(window).off('beforeunload.editpage');
-    _router2.default.navigating.unsubscribe(self.canNavigate, self);
+    _koco2.default.router.navigating.unsubscribe(self.canNavigate, self);
     self.disposer.dispose();
 };
 
