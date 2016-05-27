@@ -1,53 +1,65 @@
-'use strict';
+(function (global, factory) {
+    if (typeof define === "function" && define.amd) {
+        define(['exports', 'jquery', 'koco', 'koco-url-utilities'], factory);
+    } else if (typeof exports !== "undefined") {
+        factory(exports, require('jquery'), require('koco'), require('koco-url-utilities'));
+    } else {
+        var mod = {
+            exports: {}
+        };
+        factory(mod.exports, global.jquery, global.koco, global.kocoUrlUtilities);
+        global.contentManagement = mod.exports;
+    }
+})(this, function (exports, _jquery, _koco, _kocoUrlUtilities) {
+    'use strict';
 
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
+    Object.defineProperty(exports, "__esModule", {
+        value: true
+    });
 
-var _jquery = require('jquery');
+    var _jquery2 = _interopRequireDefault(_jquery);
 
-var _jquery2 = _interopRequireDefault(_jquery);
+    var _koco2 = _interopRequireDefault(_koco);
 
-var _koco = require('koco');
+    var _kocoUrlUtilities2 = _interopRequireDefault(_kocoUrlUtilities);
 
-var _koco2 = _interopRequireDefault(_koco);
+    function _interopRequireDefault(obj) {
+        return obj && obj.__esModule ? obj : {
+            default: obj
+        };
+    }
 
-var _kocoUrlUtilities = require('koco-url-utilities');
+    var ContentManagement = function ContentManagement() {}; // Copyright (c) CBC/Radio-Canada. All rights reserved.
+    // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-var _kocoUrlUtilities2 = _interopRequireDefault(_kocoUrlUtilities);
+    ContentManagement.prototype.registerContentPages = function (content, options) {
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+        var defaultOptions = {
+            withActivator: true,
+            editTitle: '',
+            listTitle: '',
+            listContentName: content + 's'
+        };
 
-var ContentManagement = function ContentManagement() {}; // Copyright (c) CBC/Radio-Canada. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+        options = _jquery2.default.extend(defaultOptions, options);
 
-ContentManagement.prototype.registerContentPages = function (content, options) {
-
-    var defaultOptions = {
-        withActivator: true,
-        editTitle: '',
-        listTitle: '',
-        listContentName: content + 's'
+        _koco2.default.router.registerPage(content + '-edit', {
+            basePath: 'components/' + content + '-pages/edit',
+            withActivator: options.withActivator,
+            title: options.editTitle
+        });
+        _koco2.default.router.addRoute(_kocoUrlUtilities2.default.patternWithQueryString(content + '/edit/:id:'), {
+            pageName: content + '-edit'
+        });
+        _koco2.default.router.registerPage(content + '-list', {
+            basePath: 'components/' + content + '-pages/list',
+            withActivator: true,
+            title: options.listTitle
+        });
+        _koco2.default.router.addRoute(_kocoUrlUtilities2.default.patternWithQueryString(options.listContentName), {
+            pageName: content + '-list'
+        });
     };
 
-    options = _jquery2.default.extend(defaultOptions, options);
-
-    _koco2.default.router.registerPage(content + '-edit', {
-        basePath: 'components/' + content + '-pages/edit',
-        withActivator: options.withActivator,
-        title: options.editTitle
-    });
-    _koco2.default.router.addRoute(_kocoUrlUtilities2.default.patternWithQueryString(content + '/edit/:id:'), {
-        pageName: content + '-edit'
-    });
-    _koco2.default.router.registerPage(content + '-list', {
-        basePath: 'components/' + content + '-pages/list',
-        withActivator: true,
-        title: options.listTitle
-    });
-    _koco2.default.router.addRoute(_kocoUrlUtilities2.default.patternWithQueryString(options.listContentName), {
-        pageName: content + '-list'
-    });
-};
-
-exports.default = new ContentManagement();
+    exports.default = new ContentManagement();
+});

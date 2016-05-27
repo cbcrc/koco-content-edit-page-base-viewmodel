@@ -13,7 +13,7 @@
     "knockout"
   ],
   "scripts": {
-    "build": "rm -rf dist && mkdir dist && cp -r src/* dist && rm -rf dist/*.js && babel src --out-dir dist --modules umd --presets es2015,stage-0"
+    "build": "rm -rf dist && mkdir dist && cp -r src/* dist && rm -rf dist/*.js && babel src --out-dir dist --presets es2015,stage-0 --plugins transform-es2015-modules-umd"
   },
   "license": "MIT",
   "dependencies": {
