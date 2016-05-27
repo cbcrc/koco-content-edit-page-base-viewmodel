@@ -23,6 +23,7 @@
     "koco-disposer": "^1.1.0",
     "koco-list-base-viewmodel": "^1.1.0",
     "koco-mapping-utilities": "^1.1.0",
+    "koco-modaler": "^1.1.0",
     "koco-object-utilities": "^1.1.0",
     "koco-query": "^1.1.0",
     "koco-string-utilities": "^1.1.0",
