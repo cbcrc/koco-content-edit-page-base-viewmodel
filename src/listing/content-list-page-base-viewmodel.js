@@ -4,14 +4,14 @@
 import ko from 'knockout';
 import $ from 'jquery';
 import _ from 'lodash';
-import urlUtilities from 'url-utilities';
-import router from 'router';
-import Query from 'query';
-import objectUtilities from 'object-utilities';
-import stringUtilities from 'string-utilities';
-import mappingUtilities from 'mapping-utilities';
-import Disposer from 'disposer';
-import ListBaseViewModel from 'list-base-viewmodel';
+import urlUtilities from 'koco-url-utilities';
+import koco from 'koco';
+import Query from 'koco-query';
+import objectUtilities from 'koco-object-utilities';
+import stringUtilities from 'koco-string-utilities';
+import mappingUtilities from 'koco-mapping-utilities';
+import Disposer from 'koco-disposer';
+import ListBaseViewModel from 'koco-list-base-viewmodel';
 
 
 var ContentListPageBaseViewModel = function(api, apiResourceName, settings) {
@@ -39,7 +39,7 @@ var ContentListPageBaseViewModel = function(api, apiResourceName, settings) {
 ContentListPageBaseViewModel.prototype = Object.create(ListBaseViewModel.prototype);
 ContentListPageBaseViewModel.prototype.contructor = ContentListPageBaseViewModel;
 
-//todo: rename async here & inside router
+//todo: rename async here & inside koco.router
 ContentListPageBaseViewModel.prototype.activate = function() {
     var self = this;
 
@@ -189,7 +189,7 @@ function updatePagingInfoFromQueryParams(self, queryParams) {
 ContentListPageBaseViewModel.prototype.updateUrlWithSearchArguments = function() {
     var self = this;
 
-    router.setUrlSilently({
+    koco.router.setUrlSilently({
         url: self.getUrlWithUpdatedQueryString(),
         replace: true
     });
@@ -198,7 +198,7 @@ ContentListPageBaseViewModel.prototype.updateUrlWithSearchArguments = function()
 ContentListPageBaseViewModel.prototype.getUrlWithUpdatedQueryString = function() {
     var self = this;
 
-    var route = !router.isActivating() && router.viewModel() ? router.viewModel().route : self.route;
+    var route = !koco.router.isActivating() && koco.router.viewModel() ? koco.router.viewModel().route : self.route;
     var routeUrl = route.url;
     var currentQuery = new Query(route.url);
     var currentQueryString = currentQuery.toString();

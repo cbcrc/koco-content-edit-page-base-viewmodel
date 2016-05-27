@@ -16,37 +16,37 @@ var _lodash = require('lodash');
 
 var _lodash2 = _interopRequireDefault(_lodash);
 
-var _mappingUtilities = require('mapping-utilities');
+var _kocoMappingUtilities = require('koco-mapping-utilities');
 
-var _mappingUtilities2 = _interopRequireDefault(_mappingUtilities);
+var _kocoMappingUtilities2 = _interopRequireDefault(_kocoMappingUtilities);
 
-var _urlUtilities = require('url-utilities');
+var _kocoUrlUtilities = require('koco-url-utilities');
 
-var _urlUtilities2 = _interopRequireDefault(_urlUtilities);
+var _kocoUrlUtilities2 = _interopRequireDefault(_kocoUrlUtilities);
 
-var _router = require('router');
+var _koco = require('koco');
 
-var _router2 = _interopRequireDefault(_router);
+var _koco2 = _interopRequireDefault(_koco);
 
 var _toastr = require('toastr');
 
 var _toastr2 = _interopRequireDefault(_toastr);
 
-var _modaler = require('modaler');
+var _kocoModaler = require('koco-modaler');
 
-var _modaler2 = _interopRequireDefault(_modaler);
+var _kocoModaler2 = _interopRequireDefault(_kocoModaler);
 
-var _arrayUtilities = require('array-utilities');
+var _kocoArrayUtilities = require('koco-array-utilities');
 
-var _arrayUtilities2 = _interopRequireDefault(_arrayUtilities);
+var _kocoArrayUtilities2 = _interopRequireDefault(_kocoArrayUtilities);
 
 var _validationUtilities = require('validation-utilities');
 
 var _validationUtilities2 = _interopRequireDefault(_validationUtilities);
 
-var _disposer = require('disposer');
+var _kocoDisposer = require('koco-disposer');
 
-var _disposer2 = _interopRequireDefault(_disposer);
+var _kocoDisposer2 = _interopRequireDefault(_kocoDisposer);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -87,12 +87,12 @@ var ContentEditPageBaseViewModel = function ContentEditPageBaseViewModel(api, ap
 
     self.api = api;
 
-    self.disposer = new _disposer2.default();
+    self.disposer = new _kocoDisposer2.default();
 
     self.mapping = self.settings.mapping || {};
 
     if (self.settings.observableValueObjects) {
-        _mappingUtilities2.default.mapAsObservableValueObjects(self.mapping, self.settings.observableValueObjects);
+        _kocoMappingUtilities2.default.mapAsObservableValueObjects(self.mapping, self.settings.observableValueObjects);
     }
 
     self.observableContent = _knockout2.default.validatedObservable(_knockout2.default.mapping.fromJS(observableContent, self.mapping));
@@ -114,12 +114,12 @@ var ContentEditPageBaseViewModel = function ContentEditPageBaseViewModel(api, ap
     self.serverSideValidationErrors = _knockout2.default.observableArray([]);
 
     self.content = _knockout2.default.pureComputed(function () {
-        return _mappingUtilities2.default.toJS(self.observableContent);
+        return _kocoMappingUtilities2.default.toJS(self.observableContent);
     });
     self.disposer.add(self.content);
 };
 
-//todo: rename async here & inside router
+//todo: rename async here & inside koco.router
 ContentEditPageBaseViewModel.prototype.activate = function () {
     var self = this;
 
@@ -167,7 +167,7 @@ ContentEditPageBaseViewModel.prototype.canNavigate = function () {
         return true;
     }
 
-    return _modaler2.default.show('confirm', {
+    return _kocoModaler2.default.show('confirm', {
         message: self.settings.quitConfirmMessage,
         okButtonHtml: self.settings.confirmQuitButtonText
     });
@@ -234,7 +234,7 @@ ContentEditPageBaseViewModel.prototype.validateInner = function () {
 ContentEditPageBaseViewModel.prototype.toOutputModel = function () /*saveOptions*/{
     var self = this;
 
-    var content = _mappingUtilities2.default.toJS(self.observableContent);
+    var content = _kocoMappingUtilities2.default.toJS(self.observableContent);
 
     return content;
 };
@@ -250,12 +250,12 @@ ContentEditPageBaseViewModel.prototype.hasModelChanged = function () {
 ContentEditPageBaseViewModel.prototype.isEqual = function (object, other, htmlPropertyNames, alikeArraysPropertyNames) {
     var self = this;
 
-    object = _mappingUtilities2.default.toJS(object);
-    other = _mappingUtilities2.default.toJS(other);
+    object = _kocoMappingUtilities2.default.toJS(object);
+    other = _kocoMappingUtilities2.default.toJS(other);
 
     if (_lodash2.default.isObject(object) && _lodash2.default.isObject(other)) {
-        var hasHtmlPropertyNames = _arrayUtilities2.default.isNotEmptyArray(htmlPropertyNames);
-        var hasAlikeArraysPropertyNames = _arrayUtilities2.default.isNotEmptyArray(alikeArraysPropertyNames);
+        var hasHtmlPropertyNames = _kocoArrayUtilities2.default.isNotEmptyArray(htmlPropertyNames);
+        var hasAlikeArraysPropertyNames = _kocoArrayUtilities2.default.isNotEmptyArray(alikeArraysPropertyNames);
 
         return self.isEqualObject(object, other, htmlPropertyNames, alikeArraysPropertyNames, hasHtmlPropertyNames, hasAlikeArraysPropertyNames);
     } else {
@@ -385,7 +385,7 @@ ContentEditPageBaseViewModel.prototype.takeOriginalModelSnapshot = function () {
 ContentEditPageBaseViewModel.prototype.getModelSnapshot = function () {
     var self = this;
 
-    var modelSnapshot = _mappingUtilities2.default.toJS(self.observableContent);
+    var modelSnapshot = _kocoMappingUtilities2.default.toJS(self.observableContent);
 
     return modelSnapshot;
 };
@@ -445,18 +445,18 @@ ContentEditPageBaseViewModel.prototype.reload = function (id) {
     var self = this;
 
     return self.loadContent(id).then(function () {
-        var route = _router2.default.viewModel().route;
+        var route = _koco2.default.router.viewModel().route;
 
         var url = self.apiResourceName + '/edit';
 
         var defaultOptions = {
             url: route.url.replace(new RegExp(url, 'i'), url + '/' + id),
-            pageTitle: _router2.default.viewModel().pageTitle,
+            pageTitle: _koco2.default.router.viewModel().pageTitle,
             stateObject: {},
             replace: true
         };
 
-        _router2.default.setUrlSilently(defaultOptions);
+        _koco2.default.router.setUrlSilently(defaultOptions);
 
         return self.refresh();
     });
@@ -506,11 +506,11 @@ ContentEditPageBaseViewModel.prototype.refresh = function () {
 
     return _jquery2.default.Deferred(function (dfd) {
         try {
-            //hack!!! - todo: router to be the creator of the viewmodel - refactoring maxime
+            //hack!!! - todo: koco.router to be the creator of the viewmodel - refactoring maxime
             self.ignoreDispose = true;
             //hack pour rafraichir le formulaire car certain components ne supportent pas bien le two-way data binding!!!! - problematique!
-            var viewModel = _router2.default.viewModel();
-            _router2.default.viewModel(viewModel);
+            var viewModel = _koco2.default.router.viewModel();
+            _koco2.default.router.viewModel(viewModel);
             dfd.resolve();
         } catch (error) {
             dfd.reject.apply(self, arguments);
@@ -591,7 +591,7 @@ ContentEditPageBaseViewModel.prototype.handleServerValidationErrors = function (
         }
     }
 
-    if (_arrayUtilities2.default.isNotEmptyArray(finalErrors)) {
+    if (_kocoArrayUtilities2.default.isNotEmptyArray(finalErrors)) {
         self.serverSideValidationErrors(finalErrors);
         return self.prepareScreenForValidationErrors();
     }
@@ -638,7 +638,7 @@ ContentEditPageBaseViewModel.prototype.finalize = function () {
     var self = this;
 
     self.takeOriginalModelSnapshot();
-    _router2.default.navigating.subscribe(self.canNavigate, self);
+    _koco2.default.router.navigating.subscribe(self.canNavigate, self);
     (0, _jquery2.default)(window).on('beforeunload.editpage', self.onBeforeUnload.bind(self));
 };
 
@@ -657,7 +657,7 @@ ContentEditPageBaseViewModel.prototype.disposeInner = function () {
     var self = this;
 
     (0, _jquery2.default)(window).off('beforeunload.editpage');
-    _router2.default.navigating.unsubscribe(self.canNavigate, self);
+    _koco2.default.router.navigating.unsubscribe(self.canNavigate, self);
     self.disposer.dispose();
 };
 

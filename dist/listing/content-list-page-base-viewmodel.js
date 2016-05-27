@@ -16,37 +16,37 @@ var _lodash = require('lodash');
 
 var _lodash2 = _interopRequireDefault(_lodash);
 
-var _urlUtilities = require('url-utilities');
+var _kocoUrlUtilities = require('koco-url-utilities');
 
-var _urlUtilities2 = _interopRequireDefault(_urlUtilities);
+var _kocoUrlUtilities2 = _interopRequireDefault(_kocoUrlUtilities);
 
-var _router = require('router');
+var _koco = require('koco');
 
-var _router2 = _interopRequireDefault(_router);
+var _koco2 = _interopRequireDefault(_koco);
 
-var _query = require('query');
+var _kocoQuery = require('koco-query');
 
-var _query2 = _interopRequireDefault(_query);
+var _kocoQuery2 = _interopRequireDefault(_kocoQuery);
 
-var _objectUtilities = require('object-utilities');
+var _kocoObjectUtilities = require('koco-object-utilities');
 
-var _objectUtilities2 = _interopRequireDefault(_objectUtilities);
+var _kocoObjectUtilities2 = _interopRequireDefault(_kocoObjectUtilities);
 
-var _stringUtilities = require('string-utilities');
+var _kocoStringUtilities = require('koco-string-utilities');
 
-var _stringUtilities2 = _interopRequireDefault(_stringUtilities);
+var _kocoStringUtilities2 = _interopRequireDefault(_kocoStringUtilities);
 
-var _mappingUtilities = require('mapping-utilities');
+var _kocoMappingUtilities = require('koco-mapping-utilities');
 
-var _mappingUtilities2 = _interopRequireDefault(_mappingUtilities);
+var _kocoMappingUtilities2 = _interopRequireDefault(_kocoMappingUtilities);
 
-var _disposer = require('disposer');
+var _kocoDisposer = require('koco-disposer');
 
-var _disposer2 = _interopRequireDefault(_disposer);
+var _kocoDisposer2 = _interopRequireDefault(_kocoDisposer);
 
-var _listBaseViewmodel = require('list-base-viewmodel');
+var _kocoListBaseViewmodel = require('koco-list-base-viewmodel');
 
-var _listBaseViewmodel2 = _interopRequireDefault(_listBaseViewmodel);
+var _kocoListBaseViewmodel2 = _interopRequireDefault(_kocoListBaseViewmodel);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -59,13 +59,13 @@ var ContentListPageBaseViewModel = function ContentListPageBaseViewModel(api, ap
     self.returnUrl = _knockout2.default.observable('');
     self.returnTitle = _knockout2.default.observable('');
 
-    _listBaseViewmodel2.default.call(self, api, apiResourceName, settings);
+    _kocoListBaseViewmodel2.default.call(self, api, apiResourceName, settings);
 
     self.returnToQueryString = _knockout2.default.observable('');
 
     self.creationFormUrl = _knockout2.default.pureComputed(function () {
         //Attention - ceci est une convention!
-        return _urlUtilities2.default.url(apiResourceName + '/edit?' + self.returnToQueryString());
+        return _kocoUrlUtilities2.default.url(apiResourceName + '/edit?' + self.returnToQueryString());
     });
     self.disposer.add(self.creationFormUrl);
 
@@ -73,10 +73,10 @@ var ContentListPageBaseViewModel = function ContentListPageBaseViewModel(api, ap
 }; // Copyright (c) CBC/Radio-Canada. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-ContentListPageBaseViewModel.prototype = Object.create(_listBaseViewmodel2.default.prototype);
+ContentListPageBaseViewModel.prototype = Object.create(_kocoListBaseViewmodel2.default.prototype);
 ContentListPageBaseViewModel.prototype.contructor = ContentListPageBaseViewModel;
 
-//todo: rename async here & inside router
+//todo: rename async here & inside koco.router
 ContentListPageBaseViewModel.prototype.activate = function () {
     var self = this;
 
@@ -107,8 +107,8 @@ ContentListPageBaseViewModel.prototype.activate = function () {
 
 ContentListPageBaseViewModel.prototype.getCurrentQueryString = function () {
     var self = this;
-    var args = _mappingUtilities2.default.toJS(self.searchArguments);
-    var cleanedArguments = _objectUtilities2.default.pickNonFalsy(args);
+    var args = _kocoMappingUtilities2.default.toJS(self.searchArguments);
+    var cleanedArguments = _kocoObjectUtilities2.default.pickNonFalsy(args);
     delete cleanedArguments[this.settings.defaultPagingAttr.pageNumber];
 
     return _jquery2.default.param(cleanedArguments);
@@ -130,7 +130,7 @@ ContentListPageBaseViewModel.prototype.onSearchSuccess = function (searchResult)
 
     self.updateReturnToQueryString();
 
-    return _listBaseViewmodel2.default.prototype.onSearchSuccess.call(self, searchResult);
+    return _kocoListBaseViewmodel2.default.prototype.onSearchSuccess.call(self, searchResult);
 };
 
 ContentListPageBaseViewModel.prototype.updateReturnToQueryString = function () {
@@ -154,7 +154,7 @@ ContentListPageBaseViewModel.prototype.searchByKeywords = function () {
 ContentListPageBaseViewModel.prototype.goToNextPage = function () {
     var self = this;
 
-    return _listBaseViewmodel2.default.prototype.goToNextPage.call(self).always(function () {
+    return _kocoListBaseViewmodel2.default.prototype.goToNextPage.call(self).always(function () {
         self.isPaging(false);
     });
 };
@@ -170,7 +170,7 @@ ContentListPageBaseViewModel.prototype.addEditingFormUrlToSearchResultItem = fun
 
     item.editingFormUrl = _knockout2.default.pureComputed(function () {
         //Attention - on utilise les conventions
-        return _urlUtilities2.default.url(self.apiResourceName + '/edit/' + item.id + '?' + self.returnToQueryString());
+        return _kocoUrlUtilities2.default.url(self.apiResourceName + '/edit/' + item.id + '?' + self.returnToQueryString());
     });
 };
 
@@ -192,7 +192,7 @@ ContentListPageBaseViewModel.prototype.initSearchArgumentsAndPagingInfo = functi
 
     return new _jquery2.default.Deferred(function (dfd) {
         try {
-            var currentQueryParams = new _query2.default(self.route.url).params;
+            var currentQueryParams = new _kocoQuery2.default(self.route.url).params;
             if (currentQueryParams && !_lodash2.default.isEmpty(currentQueryParams)) {
 
                 if (self.settings.pageable) {
@@ -200,7 +200,7 @@ ContentListPageBaseViewModel.prototype.initSearchArgumentsAndPagingInfo = functi
                 }
 
                 self.deserializeSearchArguments(currentQueryParams).then(function (deserializedSearchArguments) {
-                    var searchArguments = _objectUtilities2.default.pickInBoth(deserializedSearchArguments.params, self.settings.defaultSearchArguments);
+                    var searchArguments = _kocoObjectUtilities2.default.pickInBoth(deserializedSearchArguments.params, self.settings.defaultSearchArguments);
 
                     _knockout2.default.mapping.fromJS(searchArguments, self.searchArguments);
 
@@ -218,14 +218,14 @@ ContentListPageBaseViewModel.prototype.initSearchArgumentsAndPagingInfo = functi
 function updatePagingInfoFromQueryParams(self, queryParams) {
     var pagingArguments = self.pagingArguments();
 
-    pagingArguments = _jquery2.default.extend({}, pagingArguments, _objectUtilities2.default.pickInBoth(queryParams, pagingArguments));
+    pagingArguments = _jquery2.default.extend({}, pagingArguments, _kocoObjectUtilities2.default.pickInBoth(queryParams, pagingArguments));
     self.pagingArguments(pagingArguments);
 }
 
 ContentListPageBaseViewModel.prototype.updateUrlWithSearchArguments = function () {
     var self = this;
 
-    _router2.default.setUrlSilently({
+    _koco2.default.router.setUrlSilently({
         url: self.getUrlWithUpdatedQueryString(),
         replace: true
     });
@@ -234,9 +234,9 @@ ContentListPageBaseViewModel.prototype.updateUrlWithSearchArguments = function (
 ContentListPageBaseViewModel.prototype.getUrlWithUpdatedQueryString = function () {
     var self = this;
 
-    var route = !_router2.default.isActivating() && _router2.default.viewModel() ? _router2.default.viewModel().route : self.route;
+    var route = !_koco2.default.router.isActivating() && _koco2.default.router.viewModel() ? _koco2.default.router.viewModel().route : self.route;
     var routeUrl = route.url;
-    var currentQuery = new _query2.default(route.url);
+    var currentQuery = new _kocoQuery2.default(route.url);
     var currentQueryString = currentQuery.toString();
     var newQueryString = self.getCurrentQueryString();
 
