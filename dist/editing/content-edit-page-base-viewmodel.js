@@ -1,54 +1,18 @@
-'use strict';
+// Copyright (c) CBC/Radio-Canada. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
+import ko from 'knockout';
+import $ from 'jquery';
+import _ from 'lodash';
+import mappingUtilities from 'koco-mapping-utilities';
+import urlUtilities from 'koco-url-utilities';
+import koco from 'koco';
+import toastr from 'toastr';
+import modaler from 'koco-modaler';
+import arrayUtilities from 'koco-array-utilities';
+import validationUtilities from 'validation-utilities';
+import Disposer from 'koco-disposer';
 
-var _knockout = require('knockout');
-
-var _knockout2 = _interopRequireDefault(_knockout);
-
-var _jquery = require('jquery');
-
-var _jquery2 = _interopRequireDefault(_jquery);
-
-var _lodash = require('lodash');
-
-var _lodash2 = _interopRequireDefault(_lodash);
-
-var _kocoMappingUtilities = require('koco-mapping-utilities');
-
-var _kocoMappingUtilities2 = _interopRequireDefault(_kocoMappingUtilities);
-
-var _kocoUrlUtilities = require('koco-url-utilities');
-
-var _kocoUrlUtilities2 = _interopRequireDefault(_kocoUrlUtilities);
-
-var _koco = require('koco');
-
-var _koco2 = _interopRequireDefault(_koco);
-
-var _toastr = require('toastr');
-
-var _toastr2 = _interopRequireDefault(_toastr);
-
-var _kocoModaler = require('koco-modaler');
-
-var _kocoModaler2 = _interopRequireDefault(_kocoModaler);
-
-var _kocoArrayUtilities = require('koco-array-utilities');
-
-var _kocoArrayUtilities2 = _interopRequireDefault(_kocoArrayUtilities);
-
-var _validationUtilities = require('validation-utilities');
-
-var _validationUtilities2 = _interopRequireDefault(_validationUtilities);
-
-var _kocoDisposer = require('koco-disposer');
-
-var _kocoDisposer2 = _interopRequireDefault(_kocoDisposer);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var defaultSettings = {
     tinymcePropertyNames: [],
@@ -61,10 +25,9 @@ var defaultSettings = {
     unknownErrorMessage: 'Une erreur de type inconnu est survenu: ',
     confirmQuitButtonText: 'Quitter',
     apiQueryParams: null
-}; // Copyright (c) CBC/Radio-Canada. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+};
 
-var ContentEditPageBaseViewModel = function ContentEditPageBaseViewModel(api, apiResourceName, observableContent, settings) {
+var ContentEditPageBaseViewModel = function(api, apiResourceName, observableContent, settings) {
     var self = this;
 
     if (!api) {
@@ -79,7 +42,7 @@ var ContentEditPageBaseViewModel = function ContentEditPageBaseViewModel(api, ap
         throw new Error('ContentEditPageBaseViewModel - missing api observable content');
     }
 
-    self.settings = _jquery2.default.extend({}, defaultSettings, settings);
+    self.settings = $.extend({}, defaultSettings, settings);
 
     self.ignoreDispose = false;
 
@@ -87,76 +50,77 @@ var ContentEditPageBaseViewModel = function ContentEditPageBaseViewModel(api, ap
 
     self.api = api;
 
-    self.disposer = new _kocoDisposer2.default();
+    self.disposer = new Disposer();
 
     self.mapping = self.settings.mapping || {};
 
     if (self.settings.observableValueObjects) {
-        _kocoMappingUtilities2.default.mapAsObservableValueObjects(self.mapping, self.settings.observableValueObjects);
+        mappingUtilities.mapAsObservableValueObjects(self.mapping, self.settings.observableValueObjects);
     }
 
-    self.observableContent = _knockout2.default.validatedObservable(_knockout2.default.mapping.fromJS(observableContent, self.mapping));
+    self.observableContent = ko.validatedObservable(ko.mapping.fromJS(observableContent, self.mapping));
     self.observableContent.extend({
         bootstrapValidation: {}
     });
 
-    self.originalModelSnapshot = _knockout2.default.observable();
+    self.originalModelSnapshot = ko.observable();
 
     self.apiResourceName = apiResourceName;
 
     self.validatedObservables = [self.observableContent];
 
-    self.editMode = _knockout2.default.pureComputed(function () {
+    self.editMode = ko.pureComputed(function() {
         return self.getId() ? 'update' : 'create';
     });
     self.disposer.add(self.editMode);
 
-    self.serverSideValidationErrors = _knockout2.default.observableArray([]);
+    self.serverSideValidationErrors = ko.observableArray([]);
 
-    self.content = _knockout2.default.pureComputed(function () {
-        return _kocoMappingUtilities2.default.toJS(self.observableContent);
+    self.content = ko.pureComputed(function() {
+        return mappingUtilities.toJS(self.observableContent);
     });
     self.disposer.add(self.content);
 };
 
 //todo: rename async here & inside koco.router
-ContentEditPageBaseViewModel.prototype.activate = function () {
+ContentEditPageBaseViewModel.prototype.activate = function() {
     var self = this;
 
-    return new _jquery2.default.Deferred(function (dfd) {
+    return new $.Deferred(function(dfd) {
         try {
             var id = self.route.urlParams[0].id;
 
-            self.loadLookups().then(function () {
-                return self.loadContent(id).then(function () {
-                    return self.afterContentLoaded().then(function () {
-                        self.finalize();
-                        dfd.resolve();
+            self.loadLookups()
+                .then(function() {
+                    return self.loadContent(id).then(function() {
+                        return self.afterContentLoaded().then(function() {
+                            self.finalize();
+                            dfd.resolve();
+                        });
                     });
+                }).fail(function(jqXHR, textStatus, errorThrown) {
+                    if (jqXHR.status === 404 || errorThrown === 'Not Found') {
+                        dfd.reject(404);
+                    } else {
+                        //TODO: Handle better
+                        self.handleUnknownError(jqXHR, textStatus, errorThrown);
+                        dfd.reject(errorThrown || textStatus || jqXHR);
+                    }
                 });
-            }).fail(function (jqXHR, textStatus, errorThrown) {
-                if (jqXHR.status === 404 || errorThrown === 'Not Found') {
-                    dfd.reject(404);
-                } else {
-                    //TODO: Handle better
-                    self.handleUnknownError(jqXHR, textStatus, errorThrown);
-                    dfd.reject(errorThrown || textStatus || jqXHR);
-                }
-            });
         } catch (err) {
             dfd.reject(err);
         }
     }).promise();
 };
 
-ContentEditPageBaseViewModel.prototype.getId = function () {
+ContentEditPageBaseViewModel.prototype.getId = function() {
     var self = this;
 
     return self.observableContent().id();
 };
 
 //todo: rename async
-ContentEditPageBaseViewModel.prototype.canNavigate = function () {
+ContentEditPageBaseViewModel.prototype.canNavigate = function() {
     var self = this;
 
     if (self.isChangesWillBeLostConfirmationDisabled) {
@@ -167,13 +131,13 @@ ContentEditPageBaseViewModel.prototype.canNavigate = function () {
         return true;
     }
 
-    return _kocoModaler2.default.show('confirm', {
+    return modaler.show('confirm', {
         message: self.settings.quitConfirmMessage,
         okButtonHtml: self.settings.confirmQuitButtonText
     });
 };
 
-ContentEditPageBaseViewModel.prototype.onBeforeUnload = function () {
+ContentEditPageBaseViewModel.prototype.onBeforeUnload = function() {
     var self = this;
 
     if (self.isChangesWillBeLostConfirmationDisabled) {
@@ -188,12 +152,12 @@ ContentEditPageBaseViewModel.prototype.onBeforeUnload = function () {
 };
 
 //todo: rename async
-ContentEditPageBaseViewModel.prototype.save = function (options) {
+ContentEditPageBaseViewModel.prototype.save = function(options) {
     var self = this;
 
     self.serverSideValidationErrors([]);
 
-    return self.validate().then(function (isValid) {
+    return self.validate().then(function(isValid) {
         if (isValid) {
             return self.saveInner(options);
         }
@@ -201,23 +165,24 @@ ContentEditPageBaseViewModel.prototype.save = function (options) {
 };
 
 //todo: rename async
-ContentEditPageBaseViewModel.prototype.validate = function () {
+ContentEditPageBaseViewModel.prototype.validate = function() {
     var self = this;
     var _isValid = false;
 
-    return _jquery2.default.Deferred(function (dfd) {
+    return $.Deferred(function(dfd) {
         try {
-            self.validateInner().then(function (isValid) {
-                _isValid = isValid;
+            self.validateInner()
+                .then(function(isValid) {
+                    _isValid = isValid;
 
-                if (!isValid) {
-                    return self.prepareScreenForValidationErrors();
-                }
-            }).then(function () {
-                dfd.resolve(_isValid);
-            }).fail(function () {
-                dfd.reject.apply(self, arguments);
-            });
+                    if (!isValid) {
+                        return self.prepareScreenForValidationErrors();
+                    }
+                }).then(function() {
+                    dfd.resolve(_isValid);
+                }).fail(function() {
+                    dfd.reject.apply(self, arguments);
+                });
         } catch (error) {
             dfd.reject.apply(self, arguments);
         }
@@ -225,37 +190,42 @@ ContentEditPageBaseViewModel.prototype.validate = function () {
 };
 
 //todo: rename async
-ContentEditPageBaseViewModel.prototype.validateInner = function () {
+ContentEditPageBaseViewModel.prototype.validateInner = function() {
     var self = this;
 
-    return _validationUtilities2.default.validateObservables(self.validatedObservables);
+    return validationUtilities.validateObservables(self.validatedObservables);
 };
 
-ContentEditPageBaseViewModel.prototype.toOutputModel = function () /*saveOptions*/{
+ContentEditPageBaseViewModel.prototype.toOutputModel = function( /*saveOptions*/ ) {
     var self = this;
 
-    var content = _kocoMappingUtilities2.default.toJS(self.observableContent);
+    var content = mappingUtilities.toJS(self.observableContent);
 
     return content;
 };
 
 /******** todo: extraire logique de isEqual pour contenu *********/
 
-ContentEditPageBaseViewModel.prototype.hasModelChanged = function () {
+ContentEditPageBaseViewModel.prototype.hasModelChanged = function() {
     var self = this;
 
-    return self.isEqual(self.originalModelSnapshot(), self.takeCurrentModelSnapshot(), self.settings.tinymcePropertyNames, self.settings.alikeArraysPropertyNames) === false;
+    return self.isEqual(
+        self.originalModelSnapshot(),
+        self.takeCurrentModelSnapshot(),
+        self.settings.tinymcePropertyNames,
+        self.settings.alikeArraysPropertyNames
+    ) === false;
 };
 
-ContentEditPageBaseViewModel.prototype.isEqual = function (object, other, htmlPropertyNames, alikeArraysPropertyNames) {
+ContentEditPageBaseViewModel.prototype.isEqual = function(object, other, htmlPropertyNames, alikeArraysPropertyNames) {
     var self = this;
 
-    object = _kocoMappingUtilities2.default.toJS(object);
-    other = _kocoMappingUtilities2.default.toJS(other);
+    object = mappingUtilities.toJS(object);
+    other = mappingUtilities.toJS(other);
 
-    if (_lodash2.default.isObject(object) && _lodash2.default.isObject(other)) {
-        var hasHtmlPropertyNames = _kocoArrayUtilities2.default.isNotEmptyArray(htmlPropertyNames);
-        var hasAlikeArraysPropertyNames = _kocoArrayUtilities2.default.isNotEmptyArray(alikeArraysPropertyNames);
+    if (_.isObject(object) && _.isObject(other)) {
+        var hasHtmlPropertyNames = arrayUtilities.isNotEmptyArray(htmlPropertyNames);
+        var hasAlikeArraysPropertyNames = arrayUtilities.isNotEmptyArray(alikeArraysPropertyNames);
 
         return self.isEqualObject(object, other, htmlPropertyNames, alikeArraysPropertyNames, hasHtmlPropertyNames, hasAlikeArraysPropertyNames);
     } else {
@@ -263,11 +233,11 @@ ContentEditPageBaseViewModel.prototype.isEqual = function (object, other, htmlPr
     }
 };
 
-ContentEditPageBaseViewModel.prototype.isEqualObject = function (object, other, htmlPropertyNames, alikeArraysPropertyNames, hasHtmlPropertyNames, hasAlikeArraysPropertyNames) {
+ContentEditPageBaseViewModel.prototype.isEqualObject = function(object, other, htmlPropertyNames, alikeArraysPropertyNames, hasHtmlPropertyNames, hasAlikeArraysPropertyNames) {
     var self = this;
     var propertiesEqual;
 
-    if (_lodash2.default.keys(object).length !== _lodash2.default.keys(other).length) {
+    if (_.keys(object).length !== _.keys(other).length) {
         return false;
     }
 
@@ -288,52 +258,52 @@ ContentEditPageBaseViewModel.prototype.isEqualObject = function (object, other, 
     return true;
 };
 
-ContentEditPageBaseViewModel.prototype.isEqualProperty = function (key, object, other, htmlPropertyNames, alikeArraysPropertyNames, hasHtmlPropertyNames, hasAlikeArraysPropertyNames) {
+ContentEditPageBaseViewModel.prototype.isEqualProperty = function(key, object, other, htmlPropertyNames, alikeArraysPropertyNames, hasHtmlPropertyNames, hasAlikeArraysPropertyNames) {
     var self = this;
     var val1 = object[key];
     var val2 = other[key];
 
-    if (_lodash2.default.isFunction(val1) || _lodash2.default.isFunction(val2)) {
-        if (!_lodash2.default.isFunction(val1) || !_lodash2.default.isFunction(val2)) {
+    if (_.isFunction(val1) || _.isFunction(val2)) {
+        if (!_.isFunction(val1) || !_.isFunction(val2)) {
             return false;
         }
 
         return true; //we do not compare functions...
     }
 
-    if (_lodash2.default.isArray(val1) || _lodash2.default.isArray(val2)) {
-        if (hasAlikeArraysPropertyNames && _lodash2.default.includes(alikeArraysPropertyNames, key)) {
+    if (_.isArray(val1) || _.isArray(val2)) {
+        if (hasAlikeArraysPropertyNames && _.includes(alikeArraysPropertyNames, key)) {
             //humm... c'est bon ça!? comparaison boiteuse... pourquoi on fait ça donc? pour ne pas tenir compte de l'ordre des valeurs de l'array!?
-            return val1.length === val2.length && _lodash2.default.intersection(val1, val2).length === val1.length;
+            return val1.length === val2.length && _.intersection(val1, val2).length === val1.length;
         }
 
-        return val1.length === val2.length && _lodash2.default.every(val1, function (val, i) {
+        return val1.length === val2.length && _.every(val1, function(val, i) {
             //pas de récursion pour les valeurs des array
-            return _lodash2.default.isEqual(val, val2[i]);
+            return _.isEqual(val, val2[i]);
         });
     }
 
-    if (_lodash2.default.isObject(val1) || _lodash2.default.isObject(val2)) {
-        if (!_lodash2.default.isObject(val1) || !_lodash2.default.isObject(val2)) {
+    if (_.isObject(val1) || _.isObject(val2)) {
+        if (!_.isObject(val1) || !_.isObject(val2)) {
             return false;
         } else {
             return self.isEqualObject(val1, val2, htmlPropertyNames, alikeArraysPropertyNames, hasHtmlPropertyNames, hasAlikeArraysPropertyNames);
         }
     }
 
-    if (hasHtmlPropertyNames && _lodash2.default.includes(htmlPropertyNames, key)) {
+    if (hasHtmlPropertyNames && _.includes(htmlPropertyNames, key)) {
         var html1, html2;
 
         if (val1) {
-            html1 = (0, _jquery2.default)('<div/>').html(val1.replace(/(\r\n|\n|\r)/gm, ''))[0];
+            html1 = $('<div/>').html(val1.replace(/(\r\n|\n|\r)/gm, ''))[0];
         } else {
-            html1 = (0, _jquery2.default)('<div/>').html(val1)[0];
+            html1 = $('<div/>').html(val1)[0];
         }
 
         if (val2) {
-            html2 = (0, _jquery2.default)('<div/>').html(val2.replace(/(\r\n|\n|\r)/gm, ''))[0];
+            html2 = $('<div/>').html(val2.replace(/(\r\n|\n|\r)/gm, ''))[0];
         } else {
-            html2 = (0, _jquery2.default)('<div/>').html(val2)[0];
+            html2 = $('<div/>').html(val2)[0];
         }
 
         //Attention: IE9+
@@ -341,12 +311,13 @@ ContentEditPageBaseViewModel.prototype.isEqualProperty = function (key, object, 
         return html1.isEqualNode(html2);
     }
 
-    return _lodash2.default.isEqual(val1, val2);
+    return _.isEqual(val1, val2);
 };
 
 /*************************************************************/
 
-ContentEditPageBaseViewModel.prototype.takeCurrentModelSnapshot = function () {
+
+ContentEditPageBaseViewModel.prototype.takeCurrentModelSnapshot = function() {
     var self = this;
     var modelSnapshot = self.getModelSnapshot();
 
@@ -361,10 +332,10 @@ ContentEditPageBaseViewModel.prototype.takeCurrentModelSnapshot = function () {
     return modelSnapshot;
 };
 
-ContentEditPageBaseViewModel.prototype.clearContentFromTinymceSpecificMarkup = function (tinymceContnet) {
+ContentEditPageBaseViewModel.prototype.clearContentFromTinymceSpecificMarkup = function(tinymceContnet) {
     //var self = this;
 
-    var $buffer = (0, _jquery2.default)('<div>');
+    var $buffer = $('<div>');
     $buffer.html(tinymceContnet);
     $buffer.find('.articleBody').removeClass('articleBody');
     $buffer.find('.first').removeClass('first');
@@ -376,22 +347,22 @@ ContentEditPageBaseViewModel.prototype.clearContentFromTinymceSpecificMarkup = f
     return result;
 };
 
-ContentEditPageBaseViewModel.prototype.takeOriginalModelSnapshot = function () {
+ContentEditPageBaseViewModel.prototype.takeOriginalModelSnapshot = function() {
     var self = this;
 
     self.originalModelSnapshot(self.takeCurrentModelSnapshot());
 };
 
-ContentEditPageBaseViewModel.prototype.getModelSnapshot = function () {
+ContentEditPageBaseViewModel.prototype.getModelSnapshot = function() {
     var self = this;
 
-    var modelSnapshot = _kocoMappingUtilities2.default.toJS(self.observableContent);
+    var modelSnapshot = mappingUtilities.toJS(self.observableContent);
 
     return modelSnapshot;
 };
 
 //todo: rename async
-ContentEditPageBaseViewModel.prototype.loadContent = function (id) {
+ContentEditPageBaseViewModel.prototype.loadContent = function(id) {
     var self = this;
     var apiEndpointUrl;
 
@@ -403,20 +374,20 @@ ContentEditPageBaseViewModel.prototype.loadContent = function (id) {
 };
 
 //todo: rename async
-ContentEditPageBaseViewModel.prototype.loadLookups = function () {
-    return _jquery2.default.Deferred().resolve().promise();
+ContentEditPageBaseViewModel.prototype.loadLookups = function() {
+    return $.Deferred().resolve().promise();
 };
 
 //todo: rename async
-ContentEditPageBaseViewModel.prototype.afterContentLoaded = function () {
-    return _jquery2.default.Deferred().resolve().promise();
+ContentEditPageBaseViewModel.prototype.afterContentLoaded = function() {
+    return $.Deferred().resolve().promise();
 };
 
 //todo: rename async
-ContentEditPageBaseViewModel.prototype.onContentLoaded = function (content) {
+ContentEditPageBaseViewModel.prototype.onContentLoaded = function(content) {
     var self = this;
 
-    return _jquery2.default.Deferred(function (dfd) {
+    return $.Deferred(function(dfd) {
         try {
             self.updateObservableContent(content);
             self.takeOriginalModelSnapshot();
@@ -428,89 +399,91 @@ ContentEditPageBaseViewModel.prototype.onContentLoaded = function (content) {
     }).promise();
 };
 
-ContentEditPageBaseViewModel.prototype.updateObservableContent = function (content) {
+ContentEditPageBaseViewModel.prototype.updateObservableContent = function(content) {
     var self = this;
 
     var adaptedContentFromServer = self.fromInputModel(content);
 
-    _knockout2.default.mapping.fromJS(adaptedContentFromServer, self.mapping, self.observableContent);
+    ko.mapping.fromJS(adaptedContentFromServer, self.mapping, self.observableContent);
 };
 
-ContentEditPageBaseViewModel.prototype.fromInputModel = function (inputModel) {
+ContentEditPageBaseViewModel.prototype.fromInputModel = function(inputModel) {
     return inputModel;
 };
 
 //todo: rename async
-ContentEditPageBaseViewModel.prototype.reload = function (id) {
+ContentEditPageBaseViewModel.prototype.reload = function(id) {
     var self = this;
 
-    return self.loadContent(id).then(function () {
-        var route = _koco2.default.router.context().route;
+    return self.loadContent(id).then(function() {
+        var route = koco.router.context().route;
 
         var url = self.apiResourceName + '/edit';
 
         var defaultOptions = {
             url: route.url.replace(new RegExp(url, 'i'), url + '/' + id),
-            pageTitle: _koco2.default.router.context().pageTitle,
+            pageTitle: koco.router.context().pageTitle,
             stateObject: {},
             replace: true
         };
 
-        _koco2.default.router.setUrlSilently(defaultOptions);
+        koco.router.setUrlSilently(defaultOptions);
 
         return self.refresh();
     });
 };
 
 //todo: rename async
-ContentEditPageBaseViewModel.prototype.create = function (writeModel /*, options*/) {
+ContentEditPageBaseViewModel.prototype.create = function(writeModel /*, options*/ ) {
     var self = this;
 
-    return self.api.postJson(self.apiResourceName, writeModel).then(function (data, textStatus, jqXhr) {
-        return self.onCreateSuccess(data, textStatus, jqXhr);
-    }, function (jqXhr, textStatus, errorThrown) {
-        return self.onCreateFail(jqXhr, textStatus, errorThrown);
-    });
+    return self.api.postJson(self.apiResourceName, writeModel)
+        .then(function(data, textStatus, jqXhr) {
+            return self.onCreateSuccess(data, textStatus, jqXhr);
+        }, function(jqXhr, textStatus, errorThrown) {
+            return self.onCreateFail(jqXhr, textStatus, errorThrown);
+        });
 };
 
 //todo: rename async
-ContentEditPageBaseViewModel.prototype.update = function (writeModel /*, options*/) {
+ContentEditPageBaseViewModel.prototype.update = function(writeModel /*, options*/ ) {
     var self = this,
         id = self.getId(),
         queryParams = '';
 
     if (self.apiQueryParams) {
-        queryParams = '?' + _jquery2.default.param(self.apiQueryParams, true);
+        queryParams = '?' + $.param(self.apiQueryParams, true);
     }
 
-    return self.api.putJson(self.apiResourceName + '/' + id + queryParams, writeModel).then(function (data, textStatus, jqXhr) {
-        return self.onUpdateSuccess(id, data, textStatus, jqXhr);
-    }, function (jqXhr, textStatus, errorThrown) {
-        return self.onUpdateFail(writeModel, id, jqXhr, textStatus, errorThrown);
-    });
+    return self.api.putJson(self.apiResourceName + '/' + id + queryParams, writeModel)
+        .then(function(data, textStatus, jqXhr) {
+            return self.onUpdateSuccess(id, data, textStatus, jqXhr);
+        }, function(jqXhr, textStatus, errorThrown) {
+            return self.onUpdateFail(writeModel, id, jqXhr, textStatus, errorThrown);
+        });
 };
 
 //todo: rename async
-ContentEditPageBaseViewModel.prototype.onCreateSuccess = function (id) {
+ContentEditPageBaseViewModel.prototype.onCreateSuccess = function(id) {
     var self = this;
 
     self.isChangesWillBeLostConfirmationDisabled = true;
-    _toastr2.default.success(self.settings.contentCreatedMessage);
+    toastr.success(self.settings.contentCreatedMessage);
 
     return self.reload(id);
 };
 
 //todo: rename async
-ContentEditPageBaseViewModel.prototype.refresh = function () {
+ContentEditPageBaseViewModel.prototype.refresh = function() {
     var self = this;
 
-    return _jquery2.default.Deferred(function (dfd) {
+    return $.Deferred(function(dfd) {
         try {
             //hack!!! - todo: koco.router to be the creator of the viewmodel - refactoring maxime
             self.ignoreDispose = true;
             //hack pour rafraichir le formulaire car certain components ne supportent pas bien le two-way data binding!!!! - problematique!
-            var viewModel = _koco2.default.router.context();
-            _koco2.default.router.context(viewModel);
+            var viewModel = koco.router.context();
+            koco.router.context(viewModel);
             dfd.resolve();
         } catch (error) {
             dfd.reject.apply(self, arguments);
@@ -519,7 +492,7 @@ ContentEditPageBaseViewModel.prototype.refresh = function () {
 };
 
 //todo: rename async
-ContentEditPageBaseViewModel.prototype.onUpdateFail = function (writeModel, id, jqXhr, textStatus, errorThrown) {
+ContentEditPageBaseViewModel.prototype.onUpdateFail = function(writeModel, id, jqXhr, textStatus, errorThrown) {
     var self = this;
 
     switch (jqXhr.status) {
@@ -529,8 +502,7 @@ ContentEditPageBaseViewModel.prototype.onUpdateFail = function (writeModel, id, 
         case 406:
             return self.handleServerValidationErrors([jqXhr.responseJSON]);
 
-        case 409:
-            //Version conflict
+        case 409: //Version conflict
             return self.handleSaveConflict(writeModel, jqXhr.responseJSON);
 
         default:
@@ -539,7 +511,7 @@ ContentEditPageBaseViewModel.prototype.onUpdateFail = function (writeModel, id, 
 };
 
 //todo: rename async
-ContentEditPageBaseViewModel.prototype.onCreateFail = function (jqXhr, textStatus, errorThrown) {
+ContentEditPageBaseViewModel.prototype.onCreateFail = function(jqXhr, textStatus, errorThrown) {
     var self = this;
 
     switch (jqXhr.status) {
@@ -553,32 +525,32 @@ ContentEditPageBaseViewModel.prototype.onCreateFail = function (jqXhr, textStatu
 };
 
 //todo: rename async
-ContentEditPageBaseViewModel.prototype.handleUnknownError = function (jqXhr, textStatus, errorThrown) {
+ContentEditPageBaseViewModel.prototype.handleUnknownError = function(jqXhr, textStatus, errorThrown) {
     var self = this;
 
-    _toastr2.default.error(self.settings.unknownErrorMessage + errorThrown);
+    toastr.error(self.settings.unknownErrorMessage + errorThrown);
 
-    return _jquery2.default.Deferred().resolve().promise();
+    return $.Deferred().resolve().promise();
 };
 
 //todo: rename async
-ContentEditPageBaseViewModel.prototype.onUpdateSuccess = function (id /*, data, textStatus, jqXhr*/) {
+ContentEditPageBaseViewModel.prototype.onUpdateSuccess = function(id /*, data, textStatus, jqXhr*/ ) {
     var self = this;
 
-    _toastr2.default.success(self.settings.contentUpdatedMessage);
+    toastr.success(self.settings.contentUpdatedMessage);
 
     return self.loadContent(id);
 };
 
 //todo: rename async
-ContentEditPageBaseViewModel.prototype.handleSaveConflict = function () /*writeModel, conflictInfo*/{
+ContentEditPageBaseViewModel.prototype.handleSaveConflict = function( /*writeModel, conflictInfo*/ ) {
     //var self = this;
 
-    return _jquery2.default.Deferred().resolve().promise();
+    return $.Deferred().resolve().promise();
 };
 
 //todo: rename async
-ContentEditPageBaseViewModel.prototype.handleServerValidationErrors = function (errors) {
+ContentEditPageBaseViewModel.prototype.handleServerValidationErrors = function(errors) {
     var self = this;
     //On affiche seulement les erreurs globales (key = '') pour l'instant
     //TODO: Vider les erreurs avant de commencer ?
@@ -591,27 +563,27 @@ ContentEditPageBaseViewModel.prototype.handleServerValidationErrors = function (
         }
     }
 
-    if (_kocoArrayUtilities2.default.isNotEmptyArray(finalErrors)) {
+    if (arrayUtilities.isNotEmptyArray(finalErrors)) {
         self.serverSideValidationErrors(finalErrors);
         return self.prepareScreenForValidationErrors();
     }
 
-    return _jquery2.default.Deferred().resolve().promise();
+    return $.Deferred().resolve().promise();
 };
 
 //todo: rename async
-ContentEditPageBaseViewModel.prototype.prepareScreenForValidationErrors = function () {
+ContentEditPageBaseViewModel.prototype.prepareScreenForValidationErrors = function() {
     var self = this;
 
-    return _jquery2.default.Deferred(function (dfd) {
+    return $.Deferred(function(dfd) {
         try {
-            _toastr2.default.error(self.settings.validationErrorsMessage);
+            toastr.error(self.settings.validationErrorsMessage);
 
             if (self.selectFirstTabWithValidationErrors) {
                 self.selectFirstTabWithValidationErrors();
             }
 
-            (0, _jquery2.default)('html, body').animate({
+            $('html, body').animate({
                 scrollTop: 0
             }, dfd.resolve);
         } catch (error) {
@@ -620,29 +592,29 @@ ContentEditPageBaseViewModel.prototype.prepareScreenForValidationErrors = functi
     }).promise();
 };
 
-ContentEditPageBaseViewModel.prototype.selectFirstTabWithValidationErrors = function () {
-    var panel = (0, _jquery2.default)('.tab-pane.active');
+ContentEditPageBaseViewModel.prototype.selectFirstTabWithValidationErrors = function() {
+    var panel = $('.tab-pane.active');
 
     if (!panel.length || !panel.find('.form-group.has-error').length) {
-        panel = (0, _jquery2.default)('.form-group.has-error').closest('.tab-pane');
+        panel = $('.form-group.has-error').closest('.tab-pane');
     }
 
     if (panel.length) {
-        (0, _jquery2.default)('.nav-tabs a[href="#' + panel.attr('id') + '"]').click();
+        $('.nav-tabs a[href="#' + panel.attr('id') + '"]').click();
     } else {
-        (0, _jquery2.default)('.nav-tabs a').first().click();
+        $('.nav-tabs a').first().click();
     }
 };
 
-ContentEditPageBaseViewModel.prototype.finalize = function () {
+ContentEditPageBaseViewModel.prototype.finalize = function() {
     var self = this;
 
     self.takeOriginalModelSnapshot();
-    _koco2.default.router.navigating.subscribe(self.canNavigate, self);
-    (0, _jquery2.default)(window).on('beforeunload.editpage', self.onBeforeUnload.bind(self));
+    koco.router.navigating.subscribe(self.canNavigate, self);
+    $(window).on('beforeunload.editpage', self.onBeforeUnload.bind(self));
 };
 
-ContentEditPageBaseViewModel.prototype.dispose = function () {
+ContentEditPageBaseViewModel.prototype.dispose = function() {
     var self = this;
 
     //this sucks... a dirty hack...
@@ -653,16 +625,16 @@ ContentEditPageBaseViewModel.prototype.dispose = function () {
     self.ignoreDispose = false;
 };
 
-ContentEditPageBaseViewModel.prototype.disposeInner = function () {
+ContentEditPageBaseViewModel.prototype.disposeInner = function() {
     var self = this;
 
-    (0, _jquery2.default)(window).off('beforeunload.editpage');
-    _koco2.default.router.navigating.unsubscribe(self.canNavigate, self);
+    $(window).off('beforeunload.editpage');
+    koco.router.navigating.unsubscribe(self.canNavigate, self);
     self.disposer.dispose();
 };
 
 //todo: rename async
-ContentEditPageBaseViewModel.prototype.saveInner = function (options) {
+ContentEditPageBaseViewModel.prototype.saveInner = function(options) {
     var self = this;
 
     var writeModel = self.toOutputModel(options);
@@ -675,24 +647,25 @@ ContentEditPageBaseViewModel.prototype.saveInner = function (options) {
 };
 
 //todo: rename async
-ContentEditPageBaseViewModel.prototype.loadContentInner = function (apiEndpointUrl) {
+ContentEditPageBaseViewModel.prototype.loadContentInner = function(apiEndpointUrl) {
     var self = this;
 
     var dataParams = null;
 
     if (self.apiQueryParams) {
         dataParams = {
-            data: _jquery2.default.param(self.apiQueryParams, true)
+            data: $.param(self.apiQueryParams, true)
         };
     }
 
     if (apiEndpointUrl) {
-        return self.api.getJson(apiEndpointUrl, dataParams).then(function (content) {
-            return self.onContentLoaded(content);
-        });
+        return self.api.getJson(apiEndpointUrl, dataParams)
+            .then(function(content) {
+                return self.onContentLoaded(content);
+            });
     }
 
-    return _jquery2.default.Deferred().resolve().promise();
+    return $.Deferred().resolve().promise();
 };
 
-exports.default = ContentEditPageBaseViewModel;
+export default ContentEditPageBaseViewModel;
