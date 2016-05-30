@@ -198,7 +198,7 @@ ContentListPageBaseViewModel.prototype.updateUrlWithSearchArguments = function()
 ContentListPageBaseViewModel.prototype.getUrlWithUpdatedQueryString = function() {
     var self = this;
 
-    var route = !koco.router.isActivating() && koco.router.viewModel() ? koco.router.viewModel().route : self.route;
+    var route = !koco.router.isActivating() && koco.router.context() ? koco.router.context().route : self.route;
     var routeUrl = route.url;
     var currentQuery = new Query(route.url);
     var currentQueryString = currentQuery.toString();

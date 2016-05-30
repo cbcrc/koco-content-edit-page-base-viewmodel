@@ -445,13 +445,13 @@ ContentEditPageBaseViewModel.prototype.reload = function (id) {
     var self = this;
 
     return self.loadContent(id).then(function () {
-        var route = _koco2.default.router.viewModel().route;
+        var route = _koco2.default.router.context().route;
 
         var url = self.apiResourceName + '/edit';
 
         var defaultOptions = {
             url: route.url.replace(new RegExp(url, 'i'), url + '/' + id),
-            pageTitle: _koco2.default.router.viewModel().pageTitle,
+            pageTitle: _koco2.default.router.context().pageTitle,
             stateObject: {},
             replace: true
         };
@@ -509,8 +509,8 @@ ContentEditPageBaseViewModel.prototype.refresh = function () {
             //hack!!! - todo: koco.router to be the creator of the viewmodel - refactoring maxime
             self.ignoreDispose = true;
             //hack pour rafraichir le formulaire car certain components ne supportent pas bien le two-way data binding!!!! - problematique!
-            var viewModel = _koco2.default.router.viewModel();
-            _koco2.default.router.viewModel(viewModel);
+            var viewModel = _koco2.default.router.context();
+            _koco2.default.router.context(viewModel);
             dfd.resolve();
         } catch (error) {
             dfd.reject.apply(self, arguments);
