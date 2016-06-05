@@ -5,667 +5,527 @@ import ko from 'knockout';
 import $ from 'jquery';
 import _ from 'lodash';
 import mappingUtilities from 'koco-mapping-utilities';
-import urlUtilities from 'koco-url-utilities';
 import koco from 'koco';
 import toastr from 'toastr';
 import modaler from 'koco-modaler';
 import arrayUtilities from 'koco-array-utilities';
 import validationUtilities from 'validation-utilities';
 import Disposer from 'koco-disposer';
+import httpUtilities from 'koco-http-utilities';
 
-
-var defaultSettings = {
-    tinymcePropertyNames: [],
-    observableValueObjects: null,
-    alikeArraysPropertyNames: [],
-    quitConfirmMessage: 'Si vous quitter cette page, vos changements seront perdus.',
-    contentCreatedMessage: 'Le contenu a été sauvegardé.',
-    contentUpdatedMessage: 'Le contenu a été sauvegardé.',
-    validationErrorsMessage: 'Le formulaire comporte des erreurs. Veuillez les corriger.',
-    unknownErrorMessage: 'Une erreur de type inconnu est survenu: ',
-    confirmQuitButtonText: 'Quitter',
-    apiQueryParams: null
+const defaultSettings = {
+  tinymcePropertyNames: [],
+  observableValueObjects: null,
+  alikeArraysPropertyNames: [],
+  quitConfirmMessage: 'Si vous quitter cette page, vos changements seront perdus.',
+  contentCreatedMessage: 'Le contenu a été sauvegardé.',
+  contentUpdatedMessage: 'Le contenu a été sauvegardé.',
+  validationErrorsMessage: 'Le formulaire comporte des erreurs. Veuillez les corriger.',
+  unknownErrorMessage: 'Une erreur de type inconnu est survenu: ',
+  confirmQuitButtonText: 'Quitter',
+  apiQueryParams: null
 };
 
-var ContentEditPageBaseViewModel = function(api, apiResourceName, observableContent, settings) {
-    var self = this;
-
+class ContentEditPageBaseViewModel {
+  constructor(api, apiResourceName, observableContent, settings) {
     if (!api) {
-        throw new Error('ContentEditPageBaseViewModel - missing api');
+      throw new Error('ContentEditPageBaseViewModel - missing api');
     }
 
     if (!apiResourceName) {
-        throw new Error('ContentEditPageBaseViewModel - missing api resource name');
+      throw new Error('ContentEditPageBaseViewModel - missing api resource name');
     }
 
     if (!observableContent) {
-        throw new Error('ContentEditPageBaseViewModel - missing api observable content');
+      throw new Error('ContentEditPageBaseViewModel - missing api observable content');
     }
 
-    self.settings = $.extend({}, defaultSettings, settings);
+    this.settings = $.extend({}, defaultSettings, settings);
 
-    self.ignoreDispose = false;
+    this.ignoreDispose = false;
 
-    self.apiQueryParams = self.settings.apiQueryParams;
+    this.apiQueryParams = this.settings.apiQueryParams;
 
-    self.api = api;
+    this.api = api;
 
-    self.disposer = new Disposer();
+    this.disposer = new Disposer();
 
-    self.mapping = self.settings.mapping || {};
+    this.mapping = this.settings.mapping || {};
 
-    if (self.settings.observableValueObjects) {
-        mappingUtilities.mapAsObservableValueObjects(self.mapping, self.settings.observableValueObjects);
+    if (this.settings.observableValueObjects) {
+      mappingUtilities.mapAsObservableValueObjects(this.mapping,
+        this.settings.observableValueObjects);
     }
 
-    self.observableContent = ko.validatedObservable(ko.mapping.fromJS(observableContent, self.mapping));
-    self.observableContent.extend({
-        bootstrapValidation: {}
+    this.observableContent = ko.validatedObservable(ko.mapping
+      .fromJS(observableContent, this.mapping));
+    this.observableContent.extend({
+      bootstrapValidation: {}
     });
 
-    self.originalModelSnapshot = ko.observable();
+    this.originalModelSnapshot = ko.observable();
 
-    self.apiResourceName = apiResourceName;
+    this.apiResourceName = apiResourceName;
 
-    self.validatedObservables = [self.observableContent];
+    this.validatedObservables = [this.observableContent];
 
-    self.editMode = ko.pureComputed(function() {
-        return self.getId() ? 'update' : 'create';
-    });
-    self.disposer.add(self.editMode);
+    this.editMode = ko.pureComputed(() => this.getId() ? 'update' : 'create');
+    this.disposer.add(this.editMode);
 
-    self.serverSideValidationErrors = ko.observableArray([]);
+    this.serverSideValidationErrors = ko.observableArray([]);
 
-    self.content = ko.pureComputed(function() {
-        return mappingUtilities.toJS(self.observableContent);
-    });
-    self.disposer.add(self.content);
-};
+    this.content = ko.pureComputed(() => mappingUtilities.toJS(this.observableContent));
+    this.disposer.add(this.content);
+  }
 
-//todo: rename async here & inside koco.router
-ContentEditPageBaseViewModel.prototype.activate = function() {
-    var self = this;
+  activate() {
+    return this.loadLookups()
+      .then(() => this.loadContent(this.route.urlParams[0].id))
+      .then(() => this.afterContentLoaded())
+      .then(() => {
+        this.finalize();
+      })
+      .catch((ex) => {
+        this.handleUnknownError(ex);
+      });
+  }
 
-    return new $.Deferred(function(dfd) {
-        try {
-            var id = self.route.urlParams[0].id;
+  getId() {
+    return this.observableContent().id();
+  }
 
-            self.loadLookups()
-                .then(function() {
-                    return self.loadContent(id).then(function() {
-                        return self.afterContentLoaded().then(function() {
-                            self.finalize();
-                            dfd.resolve();
-                        });
-                    });
-                }).fail(function(jqXHR, textStatus, errorThrown) {
-                    if (jqXHR.status === 404 || errorThrown === 'Not Found') {
-                        dfd.reject(404);
-                    } else {
-                        //TODO: Handle better
-                        self.handleUnknownError(jqXHR, textStatus, errorThrown);
-                        dfd.reject(errorThrown || textStatus || jqXHR);
-                    }
-                });
-        } catch (err) {
-            dfd.reject(err);
-        }
-    }).promise();
-};
-
-ContentEditPageBaseViewModel.prototype.getId = function() {
-    var self = this;
-
-    return self.observableContent().id();
-};
-
-//todo: rename async
-ContentEditPageBaseViewModel.prototype.canNavigate = function() {
-    var self = this;
-
-    if (self.isChangesWillBeLostConfirmationDisabled) {
-        return true;
+  canNavigate() {
+    if (this.isChangesWillBeLostConfirmationDisabled) {
+      return true;
     }
 
-    if (!self.hasModelChanged()) {
-        return true;
+    if (!this.hasModelChanged()) {
+      return true;
     }
 
     return modaler.show('confirm', {
-        message: self.settings.quitConfirmMessage,
-        okButtonHtml: self.settings.confirmQuitButtonText
+      message: this.settings.quitConfirmMessage,
+      okButtonHtml: this.settings.confirmQuitButtonText
     });
-};
+  }
 
-ContentEditPageBaseViewModel.prototype.onBeforeUnload = function() {
-    var self = this;
-
-    if (self.isChangesWillBeLostConfirmationDisabled) {
-        return;
+  onBeforeUnload() {
+    if (this.isChangesWillBeLostConfirmationDisabled) {
+      return;
     }
 
-    if (!self.hasModelChanged()) {
-        return;
+    if (!this.hasModelChanged()) {
+      return;
     }
 
-    return self.settings.quitConfirmMessage;
-};
+    return this.settings.quitConfirmMessage;
+  }
 
-//todo: rename async
-ContentEditPageBaseViewModel.prototype.save = function(options) {
-    var self = this;
+  save(options) {
+    this.serverSideValidationErrors([]);
 
-    self.serverSideValidationErrors([]);
+    return this.validate().then((isValid) => {
+      if (isValid) {
+        return this.saveInner(options);
+      }
 
-    return self.validate().then(function(isValid) {
-        if (isValid) {
-            return self.saveInner(options);
-        }
+      return Promise.resolve();
     });
-};
+  }
 
-//todo: rename async
-ContentEditPageBaseViewModel.prototype.validate = function() {
-    var self = this;
-    var _isValid = false;
-
-    return $.Deferred(function(dfd) {
-        try {
-            self.validateInner()
-                .then(function(isValid) {
-                    _isValid = isValid;
-
-                    if (!isValid) {
-                        return self.prepareScreenForValidationErrors();
-                    }
-                }).then(function() {
-                    dfd.resolve(_isValid);
-                }).fail(function() {
-                    dfd.reject.apply(self, arguments);
-                });
-        } catch (error) {
-            dfd.reject.apply(self, arguments);
+  validate() {
+    this.validateInner()
+      .then(isValid => {
+        if (!isValid) {
+          return this.prepareScreenForValidationErrors();
         }
-    }).promise();
-};
 
-//todo: rename async
-ContentEditPageBaseViewModel.prototype.validateInner = function() {
-    var self = this;
+        return Promise.resolve();
+      });
+  }
 
-    return validationUtilities.validateObservables(self.validatedObservables);
-};
+  validateInner() {
+    return validationUtilities.validateObservables(this.validatedObservables);
+  }
 
-ContentEditPageBaseViewModel.prototype.toOutputModel = function( /*saveOptions*/ ) {
-    var self = this;
+  toOutputModel( /*saveOptions*/ ) {
+    return mappingUtilities.toJS(this.observableContent);
+  }
 
-    var content = mappingUtilities.toJS(self.observableContent);
+  /* todo: extraire logique de isEqual pour contenu */
 
-    return content;
-};
-
-/******** todo: extraire logique de isEqual pour contenu *********/
-
-ContentEditPageBaseViewModel.prototype.hasModelChanged = function() {
-    var self = this;
-
-    return self.isEqual(
-        self.originalModelSnapshot(),
-        self.takeCurrentModelSnapshot(),
-        self.settings.tinymcePropertyNames,
-        self.settings.alikeArraysPropertyNames
+  hasModelChanged() {
+    return this.isEqual(
+      this.originalModelSnapshot(),
+      this.takeCurrentModelSnapshot(),
+      this.settings.tinymcePropertyNames,
+      this.settings.alikeArraysPropertyNames
     ) === false;
-};
+  }
 
-ContentEditPageBaseViewModel.prototype.isEqual = function(object, other, htmlPropertyNames, alikeArraysPropertyNames) {
-    var self = this;
-
+  isEqual(object, other, htmlPropertyNames, alikeArraysPropertyNames) {
     object = mappingUtilities.toJS(object);
     other = mappingUtilities.toJS(other);
 
     if (_.isObject(object) && _.isObject(other)) {
-        var hasHtmlPropertyNames = arrayUtilities.isNotEmptyArray(htmlPropertyNames);
-        var hasAlikeArraysPropertyNames = arrayUtilities.isNotEmptyArray(alikeArraysPropertyNames);
+      var hasHtmlPropertyNames = arrayUtilities.isNotEmptyArray(htmlPropertyNames);
+      var hasAlikeArraysPropertyNames = arrayUtilities.isNotEmptyArray(alikeArraysPropertyNames);
 
-        return self.isEqualObject(object, other, htmlPropertyNames, alikeArraysPropertyNames, hasHtmlPropertyNames, hasAlikeArraysPropertyNames);
-    } else {
-        throw new Error('content-utilities - isEqual - this function can only compare objects (_.isObject).');
+      return this.isEqualObject(object, other, htmlPropertyNames, alikeArraysPropertyNames, hasHtmlPropertyNames, hasAlikeArraysPropertyNames);
     }
-};
 
-ContentEditPageBaseViewModel.prototype.isEqualObject = function(object, other, htmlPropertyNames, alikeArraysPropertyNames, hasHtmlPropertyNames, hasAlikeArraysPropertyNames) {
-    var self = this;
+    throw new Error('content-utilities - isEqual - this function can only compare objects (_.isObject).');
+  }
+
+  isEqualObject(object, other, htmlPropertyNames, alikeArraysPropertyNames, hasHtmlPropertyNames, hasAlikeArraysPropertyNames) {
     var propertiesEqual;
 
     if (_.keys(object).length !== _.keys(other).length) {
-        return false;
+      return false;
     }
 
     for (var key in object) {
-        if (object.hasOwnProperty(key)) {
-            if (other.hasOwnProperty(key)) {
-                propertiesEqual = self.isEqualProperty(key, object, other, htmlPropertyNames, alikeArraysPropertyNames, hasHtmlPropertyNames, hasAlikeArraysPropertyNames);
+      if (object.hasOwnProperty(key)) {
+        if (other.hasOwnProperty(key)) {
+          propertiesEqual = this.isEqualProperty(key, object, other, htmlPropertyNames, alikeArraysPropertyNames, hasHtmlPropertyNames, hasAlikeArraysPropertyNames);
 
-                if (!propertiesEqual) {
-                    return false;
-                }
-            } else {
-                return false;
-            }
+          if (!propertiesEqual) {
+            return false;
+          }
+        } else {
+          return false;
         }
+      }
     }
 
     return true;
-};
+  }
 
-ContentEditPageBaseViewModel.prototype.isEqualProperty = function(key, object, other, htmlPropertyNames, alikeArraysPropertyNames, hasHtmlPropertyNames, hasAlikeArraysPropertyNames) {
-    var self = this;
+  isEqualProperty(key, object, other, htmlPropertyNames, alikeArraysPropertyNames, hasHtmlPropertyNames, hasAlikeArraysPropertyNames) {
     var val1 = object[key];
     var val2 = other[key];
 
     if (_.isFunction(val1) || _.isFunction(val2)) {
-        if (!_.isFunction(val1) || !_.isFunction(val2)) {
-            return false;
-        }
+      if (!_.isFunction(val1) || !_.isFunction(val2)) {
+        return false;
+      }
 
-        return true; //we do not compare functions...
+      return true; // we do not compare functions...
     }
 
     if (_.isArray(val1) || _.isArray(val2)) {
-        if (hasAlikeArraysPropertyNames && _.includes(alikeArraysPropertyNames, key)) {
-            //humm... c'est bon ça!? comparaison boiteuse... pourquoi on fait ça donc? pour ne pas tenir compte de l'ordre des valeurs de l'array!?
-            return val1.length === val2.length && _.intersection(val1, val2).length === val1.length;
-        }
+      if (hasAlikeArraysPropertyNames && _.includes(alikeArraysPropertyNames, key)) {
+        // humm... c'est bon ça!? comparaison boiteuse... pourquoi on fait ça donc? pour ne pas tenir compte de l'ordre des valeurs de l'array!?
+        return val1.length === val2.length && _.intersection(val1, val2).length === val1.length;
+      }
 
-        return val1.length === val2.length && _.every(val1, function(val, i) {
-            //pas de récursion pour les valeurs des array
-            return _.isEqual(val, val2[i]);
-        });
+      return val1.length === val2.length && _.every(val1, function(val, i) {
+        // pas de récursion pour les valeurs des array
+        return _.isEqual(val, val2[i]);
+      });
     }
 
     if (_.isObject(val1) || _.isObject(val2)) {
-        if (!_.isObject(val1) || !_.isObject(val2)) {
-            return false;
-        } else {
-            return self.isEqualObject(val1, val2, htmlPropertyNames, alikeArraysPropertyNames, hasHtmlPropertyNames, hasAlikeArraysPropertyNames);
-        }
+      if (!_.isObject(val1) || !_.isObject(val2)) {
+        return false;
+      } else {
+        return this.isEqualObject(val1, val2, htmlPropertyNames, alikeArraysPropertyNames, hasHtmlPropertyNames, hasAlikeArraysPropertyNames);
+      }
     }
 
     if (hasHtmlPropertyNames && _.includes(htmlPropertyNames, key)) {
-        var html1, html2;
+      var html1, html2;
 
-        if (val1) {
-            html1 = $('<div/>').html(val1.replace(/(\r\n|\n|\r)/gm, ''))[0];
-        } else {
-            html1 = $('<div/>').html(val1)[0];
-        }
+      if (val1) {
+        html1 = $('<div/>').html(val1.replace(/(\r\n|\n|\r)/gm, ''))[0];
+      } else {
+        html1 = $('<div/>').html(val1)[0];
+      }
 
-        if (val2) {
-            html2 = $('<div/>').html(val2.replace(/(\r\n|\n|\r)/gm, ''))[0];
-        } else {
-            html2 = $('<div/>').html(val2)[0];
-        }
+      if (val2) {
+        html2 = $('<div/>').html(val2.replace(/(\r\n|\n|\r)/gm, ''))[0];
+      } else {
+        html2 = $('<div/>').html(val2)[0];
+      }
 
-        //Attention: IE9+
-        //http://stackoverflow.com/questions/10679762/how-to-compare-two-html-elements/19342581
-        return html1.isEqualNode(html2);
+      // Attention: IE9+
+      // http://stackoverflow.com/questions/10679762/how-to-compare-two-html-elements/19342581
+      return html1.isEqualNode(html2);
     }
 
     return _.isEqual(val1, val2);
-};
+  }
 
-/*************************************************************/
+  /*************************************************************/
 
 
-ContentEditPageBaseViewModel.prototype.takeCurrentModelSnapshot = function() {
-    var self = this;
-    var modelSnapshot = self.getModelSnapshot();
+  takeCurrentModelSnapshot() {
+    var modelSnapshot = this.getModelSnapshot();
 
-    for (var i = 0; i < self.settings.tinymcePropertyNames.length; i++) {
-        var propertyName = self.settings.tinymcePropertyNames[i];
+    for (var i = 0; i < this.settings.tinymcePropertyNames.length; i++) {
+      var propertyName = this.settings.tinymcePropertyNames[i];
 
-        if (modelSnapshot.hasOwnProperty(propertyName)) {
-            modelSnapshot[propertyName] = self.clearContentFromTinymceSpecificMarkup(modelSnapshot[propertyName]);
-        }
+      if (modelSnapshot.hasOwnProperty(propertyName)) {
+        modelSnapshot[propertyName] = this.clearContentFromTinymceSpecificMarkup(modelSnapshot[propertyName]);
+      }
     }
 
     return modelSnapshot;
-};
+  }
 
-ContentEditPageBaseViewModel.prototype.clearContentFromTinymceSpecificMarkup = function(tinymceContnet) {
-    //var self = this;
-
-    var $buffer = $('<div>');
+  clearContentFromTinymceSpecificMarkup(tinymceContnet) {
+    const $buffer = $('<div>');
     $buffer.html(tinymceContnet);
     $buffer.find('.articleBody').removeClass('articleBody');
     $buffer.find('.first').removeClass('first');
     $buffer.find('[itemprop]').removeAttr('itemprop');
     $buffer.find('*[class=""]').removeAttr('class');
 
-    var result = $buffer.html();
+    return $buffer.html();
+  }
 
-    return result;
-};
+  takeOriginalModelSnapshot() {
+    this.originalModelSnapshot(this.takeCurrentModelSnapshot());
+  }
 
-ContentEditPageBaseViewModel.prototype.takeOriginalModelSnapshot = function() {
-    var self = this;
+  getModelSnapshot() {
+    return mappingUtilities.toJS(this.observableContent);
+  }
 
-    self.originalModelSnapshot(self.takeCurrentModelSnapshot());
-};
-
-ContentEditPageBaseViewModel.prototype.getModelSnapshot = function() {
-    var self = this;
-
-    var modelSnapshot = mappingUtilities.toJS(self.observableContent);
-
-    return modelSnapshot;
-};
-
-//todo: rename async
-ContentEditPageBaseViewModel.prototype.loadContent = function(id) {
-    var self = this;
-    var apiEndpointUrl;
+  loadContent(id) {
+    let apiEndpointUrl;
 
     if (id) {
-        apiEndpointUrl = self.apiResourceName + '/' + id;
+      apiEndpointUrl = `${this.apiResourceName}/${id}`;
     }
 
-    return self.loadContentInner(apiEndpointUrl);
-};
+    return this.loadContentInner(apiEndpointUrl);
+  }
 
-//todo: rename async
-ContentEditPageBaseViewModel.prototype.loadLookups = function() {
-    return $.Deferred().resolve().promise();
-};
+  loadLookups() {
+    return Promise.resolve();
+  }
 
-//todo: rename async
-ContentEditPageBaseViewModel.prototype.afterContentLoaded = function() {
-    return $.Deferred().resolve().promise();
-};
+  afterContentLoaded() {
+    return Promise.resolve();
+  }
 
-//todo: rename async
-ContentEditPageBaseViewModel.prototype.onContentLoaded = function(content) {
-    var self = this;
-
-    return $.Deferred(function(dfd) {
-        try {
-            self.updateObservableContent(content);
-            self.takeOriginalModelSnapshot();
-
-            dfd.resolve();
-        } catch (error) {
-            dfd.reject.apply(self, arguments);
-        }
-    }).promise();
-};
-
-ContentEditPageBaseViewModel.prototype.updateObservableContent = function(content) {
-    var self = this;
-
-    var adaptedContentFromServer = self.fromInputModel(content);
-
-    ko.mapping.fromJS(adaptedContentFromServer, self.mapping, self.observableContent);
-};
-
-ContentEditPageBaseViewModel.prototype.fromInputModel = function(inputModel) {
-    return inputModel;
-};
-
-//todo: rename async
-ContentEditPageBaseViewModel.prototype.reload = function(id) {
-    var self = this;
-
-    return self.loadContent(id).then(function() {
-        var route = koco.router.context().route;
-
-        var url = self.apiResourceName + '/edit';
-
-        var defaultOptions = {
-            url: route.url.replace(new RegExp(url, 'i'), url + '/' + id),
-            pageTitle: koco.router.context().pageTitle,
-            stateObject: {},
-            replace: true
-        };
-
-        koco.router.setUrlSilently(defaultOptions);
-
-        return self.refresh();
+  onContentLoaded(content) {
+    return new Promise((resolve) => {
+      this.updateObservableContent(content);
+      this.takeOriginalModelSnapshot();
+      resolve();
     });
-};
+  }
 
-//todo: rename async
-ContentEditPageBaseViewModel.prototype.create = function(writeModel /*, options*/ ) {
-    var self = this;
+  updateObservableContent(content) {
+    const adaptedContentFromServer = this.fromInputModel(content);
 
-    return self.api.postJson(self.apiResourceName, writeModel)
-        .then(function(data, textStatus, jqXhr) {
-            return self.onCreateSuccess(data, textStatus, jqXhr);
-        }, function(jqXhr, textStatus, errorThrown) {
-            return self.onCreateFail(jqXhr, textStatus, errorThrown);
-        });
-};
+    ko.mapping.fromJS(adaptedContentFromServer, this.mapping, this.observableContent);
+  }
 
-//todo: rename async
-ContentEditPageBaseViewModel.prototype.update = function(writeModel /*, options*/ ) {
-    var self = this,
-        id = self.getId(),
-        queryParams = '';
+  fromInputModel(inputModel) {
+    return inputModel;
+  }
 
-    if (self.apiQueryParams) {
-        queryParams = '?' + $.param(self.apiQueryParams, true);
+  reload(id) {
+    return this.loadContent(id).then(() => {
+      const route = koco.router.context().route;
+      const url = `${this.apiResourceName}/edit`;
+      const defaultOptions = {
+        url: route.url.replace(new RegExp(url, 'i'), `${url}/${id}`),
+        pageTitle: koco.router.context().pageTitle,
+        stateObject: {},
+        replace: true
+      };
+
+      koco.router.setUrlSilently(defaultOptions);
+
+      return this.refresh();
+    });
+  }
+
+  create(writeModel) {
+    return this.api.fetch(this.apiResourceName, {
+        method: 'POST',
+        body: JSON.stringify(writeModel)
+      })
+      .then(data => this.onCreateSuccess(data))
+      .catch(ex => this.onCreateFail(ex));
+  }
+
+  update(writeModel) {
+    const id = this.getId();
+    let url = `${this.apiResourceName}/${id}`;
+
+    if (this.apiQueryParams) {
+      // todo: why us $.param(.., true) here and false elsewhere?
+      url = `${url}?${$.param(this.apiQueryParams, true)}`;
     }
 
-    return self.api.putJson(self.apiResourceName + '/' + id + queryParams, writeModel)
-        .then(function(data, textStatus, jqXhr) {
-            return self.onUpdateSuccess(id, data, textStatus, jqXhr);
-        }, function(jqXhr, textStatus, errorThrown) {
-            return self.onUpdateFail(writeModel, id, jqXhr, textStatus, errorThrown);
-        });
-};
+    return this.api.fetch(url, {
+        method: 'PUT',
+        body: JSON.stringify(writeModel)
+      })
+      .then(data => this.onUpdateSuccess(id, data))
+      .catch(ex => this.onUpdateFail(writeModel, id, ex));
+  }
 
-//todo: rename async
-ContentEditPageBaseViewModel.prototype.onCreateSuccess = function(id) {
-    var self = this;
+  onCreateSuccess(id) {
+    this.isChangesWillBeLostConfirmationDisabled = true;
+    toastr.success(this.settings.contentCreatedMessage);
 
-    self.isChangesWillBeLostConfirmationDisabled = true;
-    toastr.success(self.settings.contentCreatedMessage);
+    return this.reload(id);
+  }
 
-    return self.reload(id);
-};
+  refresh() {
+    return new Promise((resolve) => {
+      // hack!!! - todo: koco.router to be the creator of the viewmodel - refactoring maxime
+      this.ignoreDispose = true;
+      // hack pour rafraichir le formulaire car certain components ne supportent pas bien le two-way data binding!!!! - problematique!
+      const viewModel = koco.router.context();
+      koco.router.context(viewModel);
+      resolve();
+    });
+  }
 
-//todo: rename async
-ContentEditPageBaseViewModel.prototype.refresh = function() {
-    var self = this;
+  onUpdateFail(writeModel, id, ex) {
+    switch (ex.response.status) {
+      case 400:
+        return this.handleServerValidationErrors(ex.response.json());
 
-    return $.Deferred(function(dfd) {
-        try {
-            //hack!!! - todo: koco.router to be the creator of the viewmodel - refactoring maxime
-            self.ignoreDispose = true;
-            //hack pour rafraichir le formulaire car certain components ne supportent pas bien le two-way data binding!!!! - problematique!
-            var viewModel = koco.router.context();
-            koco.router.context(viewModel);
-            dfd.resolve();
-        } catch (error) {
-            dfd.reject.apply(self, arguments);
-        }
-    }).promise();
-};
+      case 406:
+        return this.handleServerValidationErrors([ex.response.json()]);
 
-//todo: rename async
-ContentEditPageBaseViewModel.prototype.onUpdateFail = function(writeModel, id, jqXhr, textStatus, errorThrown) {
-    var self = this;
+      case 409: // Version conflict
+        return this.handleSaveConflict(writeModel, ex.response.json());
 
-    switch (jqXhr.status) {
-        case 400:
-            return self.handleServerValidationErrors(jqXhr.responseJSON);
-
-        case 406:
-            return self.handleServerValidationErrors([jqXhr.responseJSON]);
-
-        case 409: //Version conflict
-            return self.handleSaveConflict(writeModel, jqXhr.responseJSON);
-
-        default:
-            return self.handleUnknownError(jqXhr, textStatus, errorThrown);
+      default:
+        return this.handleUnknownError(ex);
     }
-};
+  }
 
-//todo: rename async
-ContentEditPageBaseViewModel.prototype.onCreateFail = function(jqXhr, textStatus, errorThrown) {
-    var self = this;
-
-    switch (jqXhr.status) {
-        case 400:
-            return self.handleServerValidationErrors(jqXhr.responseJSON);
-        case 406:
-            return self.handleServerValidationErrors([jqXhr.responseJSON]);
-        default:
-            return self.handleUnknownError(jqXhr, textStatus, errorThrown);
+  onCreateFail(ex) {
+    switch (ex.response.status) {
+      case 400:
+        return this.handleServerValidationErrors(ex.response.json());
+      case 406:
+        return this.handleServerValidationErrors([ex.response.json()]);
+      default:
+        return this.handleUnknownError(ex);
     }
-};
+  }
 
-//todo: rename async
-ContentEditPageBaseViewModel.prototype.handleUnknownError = function(jqXhr, textStatus, errorThrown) {
-    var self = this;
+  handleUnknownError(ex) {
+    toastr.error(`${this.settings.unknownErrorMessage} ${ex}`);
 
-    toastr.error(self.settings.unknownErrorMessage + errorThrown);
+    return Promise.resolve();
+  }
 
-    return $.Deferred().resolve().promise();
-};
+  onUpdateSuccess(id /* , data */ ) {
+    toastr.success(this.settings.contentUpdatedMessage);
 
-//todo: rename async
-ContentEditPageBaseViewModel.prototype.onUpdateSuccess = function(id /*, data, textStatus, jqXhr*/ ) {
-    var self = this;
+    return this.loadContent(id);
+  }
 
-    toastr.success(self.settings.contentUpdatedMessage);
+  handleSaveConflict( /* writeModel, conflictInfo */ ) {
+    return Promise.resolve();
+  }
 
-    return self.loadContent(id);
-};
-
-//todo: rename async
-ContentEditPageBaseViewModel.prototype.handleSaveConflict = function( /*writeModel, conflictInfo*/ ) {
-    //var self = this;
-
-    return $.Deferred().resolve().promise();
-};
-
-//todo: rename async
-ContentEditPageBaseViewModel.prototype.handleServerValidationErrors = function(errors) {
-    var self = this;
-    //On affiche seulement les erreurs globales (key = '') pour l'instant
-    //TODO: Vider les erreurs avant de commencer ?
+  handleServerValidationErrors(errors) {
+    // On affiche seulement les erreurs globales (key = '') pour l'instant
+    // TODO: Vider les erreurs avant de commencer ?
 
     var finalErrors = [];
 
     for (var key in errors) {
-        for (var key2 in errors[key]) {
-            finalErrors.push(errors[key][key2]);
-        }
+      for (var key2 in errors[key]) {
+        finalErrors.push(errors[key][key2]);
+      }
     }
 
     if (arrayUtilities.isNotEmptyArray(finalErrors)) {
-        self.serverSideValidationErrors(finalErrors);
-        return self.prepareScreenForValidationErrors();
+      this.serverSideValidationErrors(finalErrors);
+      return this.prepareScreenForValidationErrors();
     }
 
-    return $.Deferred().resolve().promise();
-};
+    return Promise.resolve();
+  }
 
-//todo: rename async
-ContentEditPageBaseViewModel.prototype.prepareScreenForValidationErrors = function() {
-    var self = this;
+  prepareScreenForValidationErrors() {
+    return new Promise((resolve) => {
+      toastr.error(this.settings.validationErrorsMessage);
 
-    return $.Deferred(function(dfd) {
-        try {
-            toastr.error(self.settings.validationErrorsMessage);
+      if (this.selectFirstTabWithValidationErrors) {
+        this.selectFirstTabWithValidationErrors();
+      }
 
-            if (self.selectFirstTabWithValidationErrors) {
-                self.selectFirstTabWithValidationErrors();
-            }
+      $('html, body').animate({
+        scrollTop: 0
+      }, resolve);
+    });
+  }
 
-            $('html, body').animate({
-                scrollTop: 0
-            }, dfd.resolve);
-        } catch (error) {
-            dfd.reject.apply(self, arguments);
-        }
-    }).promise();
-};
-
-ContentEditPageBaseViewModel.prototype.selectFirstTabWithValidationErrors = function() {
-    var panel = $('.tab-pane.active');
+  selectFirstTabWithValidationErrors() {
+    let panel = $('.tab-pane.active');
 
     if (!panel.length || !panel.find('.form-group.has-error').length) {
-        panel = $('.form-group.has-error').closest('.tab-pane');
+      panel = $('.form-group.has-error').closest('.tab-pane');
     }
 
     if (panel.length) {
-        $('.nav-tabs a[href="#' + panel.attr('id') + '"]').click();
+      $(`.nav-tabs a[href="#${panel.attr('id')}"]`).click();
     } else {
-        $('.nav-tabs a').first().click();
+      $('.nav-tabs a').first().click();
     }
-};
+  }
 
-ContentEditPageBaseViewModel.prototype.finalize = function() {
-    var self = this;
+  finalize() {
+    this.takeOriginalModelSnapshot();
+    koco.router.navigating.subscribe(this.canNavigate, this);
+    $(window).on('beforeunload.editpage', this.onBeforeUnload.bind(this));
+  }
 
-    self.takeOriginalModelSnapshot();
-    koco.router.navigating.subscribe(self.canNavigate, self);
-    $(window).on('beforeunload.editpage', self.onBeforeUnload.bind(self));
-};
-
-ContentEditPageBaseViewModel.prototype.dispose = function() {
-    var self = this;
-
-    //this sucks... a dirty hack...
-    if (!self.ignoreDispose) {
-        self.disposeInner();
+  dispose() {
+    // this sucks... a dirty hack...
+    if (!this.ignoreDispose) {
+      this.disposeInner();
     }
 
-    self.ignoreDispose = false;
-};
+    this.ignoreDispose = false;
+  }
 
-ContentEditPageBaseViewModel.prototype.disposeInner = function() {
-    var self = this;
-
+  disposeInner() {
     $(window).off('beforeunload.editpage');
-    koco.router.navigating.unsubscribe(self.canNavigate, self);
-    self.disposer.dispose();
-};
+    koco.router.navigating.unsubscribe(this.canNavigate, this);
+    this.disposer.dispose();
+  }
 
-//todo: rename async
-ContentEditPageBaseViewModel.prototype.saveInner = function(options) {
-    var self = this;
+  saveInner(options) {
+    const writeModel = this.toOutputModel(options);
 
-    var writeModel = self.toOutputModel(options);
-
-    if (self.editMode() === 'create') {
-        return self.create(writeModel, options);
-    } else {
-        return self.update(writeModel, options);
-    }
-};
-
-//todo: rename async
-ContentEditPageBaseViewModel.prototype.loadContentInner = function(apiEndpointUrl) {
-    var self = this;
-
-    var dataParams = null;
-
-    if (self.apiQueryParams) {
-        dataParams = {
-            data: $.param(self.apiQueryParams, true)
-        };
+    if (this.editMode() === 'create') {
+      return this.create(writeModel, options);
     }
 
+    return this.update(writeModel, options);
+  }
+
+  loadContentInner(apiEndpointUrl) {
     if (apiEndpointUrl) {
-        return self.api.getJson(apiEndpointUrl, dataParams)
-            .then(function(content) {
-                return self.onContentLoaded(content);
-            });
+      let url = apiEndpointUrl;
+
+      if (this.apiQueryParams) {
+        // todo: why us $.param(.., true) here and false elsewhere?
+        url = `${url}?${$.param(this.apiQueryParams, true)}`;
+      }
+
+      return this.api.fetch(apiEndpointUrl)
+        .then((content) => this.onContentLoaded(content));
     }
 
-    return $.Deferred().resolve().promise();
-};
+    return Promise.resolve();
+  }
+}
 
 export default ContentEditPageBaseViewModel;
