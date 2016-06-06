@@ -106,9 +106,15 @@ ContentListPageBaseViewModel.prototype.searchByKeywords = function() {
 ContentListPageBaseViewModel.prototype.goToNextPage = function() {
   var self = this;
 
-  return ListBaseViewModel.prototype.goToNextPage.call(self).always(function() {
-    self.isPaging(false);
-  });
+  var promise = ListBaseViewModel.prototype.goToNextPage.call(self);
+
+  promise
+    .catch(ex => {})
+    .then(() => {
+      self.isPaging(false);
+    });
+
+  return promise;
 };
 
 ContentListPageBaseViewModel.prototype.addPropertiesToSearchResultItem = function(item) {
