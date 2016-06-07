@@ -11,7 +11,7 @@ import objectUtilities from 'koco-object-utilities';
 import mappingUtilities from 'koco-mapping-utilities';
 import ListBaseViewModel from 'koco-list-base-viewmodel';
 
-var ContentListPageBaseViewModel = function(api, apiResourceName, settings) {
+var ContentListPageBaseViewModel = function(context, componentInfo, api, apiResourceName, settings) {
   var self = this;
 
   self.skipUpdateUrlOneTime = false;
@@ -19,6 +19,8 @@ var ContentListPageBaseViewModel = function(api, apiResourceName, settings) {
   self.title = ko.observable('');
   self.returnUrl = ko.observable('');
   self.returnTitle = ko.observable('');
+
+  this.route = context.route;
 
   ListBaseViewModel.call(self, api, apiResourceName, settings);
 

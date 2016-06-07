@@ -27,7 +27,7 @@ const defaultSettings = {
 };
 
 class ContentEditPageBaseViewModel {
-  constructor(api, apiResourceName, observableContent, settings) {
+  constructor(context, componentInfo, api, apiResourceName, observableContent, settings) {
     if (!api) {
       throw new Error('ContentEditPageBaseViewModel - missing api');
     }
@@ -39,6 +39,8 @@ class ContentEditPageBaseViewModel {
     if (!observableContent) {
       throw new Error('ContentEditPageBaseViewModel - missing api observable content');
     }
+
+    this.route = context.route;
 
     this.settings = $.extend({}, defaultSettings, settings);
 
