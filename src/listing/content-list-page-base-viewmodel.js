@@ -49,8 +49,8 @@ ContentListPageBaseViewModel.prototype.activate = function() {
     .then(() => {
       this.skipUpdateUrlOneTime = true;
     })
-    .then(() => self.initSearchArgumentsAndPagingInfo())
-    .then(() => self.searchWithFilters())
+    .then(() => this.initSearchArgumentsAndPagingInfo())
+    .then(() => this.searchWithFilters())
     .catch((ex) => {
       this.handleUnknownError(ex);
       throw ex;

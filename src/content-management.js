@@ -21,7 +21,7 @@ ContentManagement.prototype.registerContentPages = function(content, options) {
     options = $.extend(defaultOptions, options);
 
     koco.router.registerPage(content + '-edit', {
-        basePath: 'components/' + content + '-pages/edit',
+        basePath: 'modules/' + content + '-pages/edit',
         withActivator: options.withActivator,
         title: options.editTitle
     });
@@ -29,7 +29,7 @@ ContentManagement.prototype.registerContentPages = function(content, options) {
         pageName: content + '-edit'
     });
     koco.router.registerPage(content + '-list', {
-        basePath: 'components/' + content + '-pages/list',
+        basePath: 'modules/' + content + '-pages/list',
         withActivator: true,
         title: options.listTitle
     });

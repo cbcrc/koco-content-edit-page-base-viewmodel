@@ -81,9 +81,9 @@
     return this.loadLookups().then(function () {
       _this.skipUpdateUrlOneTime = true;
     }).then(function () {
-      return self.initSearchArgumentsAndPagingInfo();
+      return _this.initSearchArgumentsAndPagingInfo();
     }).then(function () {
-      return self.searchWithFilters();
+      return _this.searchWithFilters();
     }).catch(function (ex) {
       _this.handleUnknownError(ex);
       throw ex;

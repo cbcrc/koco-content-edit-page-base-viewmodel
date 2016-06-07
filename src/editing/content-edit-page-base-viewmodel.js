@@ -78,9 +78,9 @@ class ContentEditPageBaseViewModel {
     this.disposer.add(this.content);
   }
 
-  activate() {
+  activate(context) {
     return this.loadLookups()
-      .then(() => this.loadContent(this.route.urlParams[0].id))
+      .then(() => this.loadContent(context.route.urlParams[0].id))
       .then(() => this.afterContentLoaded())
       .then(() => {
         this.finalize();

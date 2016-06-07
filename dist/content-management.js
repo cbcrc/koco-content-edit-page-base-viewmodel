@@ -44,7 +44,7 @@
         options = _jquery2.default.extend(defaultOptions, options);
 
         _koco2.default.router.registerPage(content + '-edit', {
-            basePath: 'components/' + content + '-pages/edit',
+            basePath: 'modules/' + content + '-pages/edit',
             withActivator: options.withActivator,
             title: options.editTitle
         });
@@ -52,7 +52,7 @@
             pageName: content + '-edit'
         });
         _koco2.default.router.registerPage(content + '-list', {
-            basePath: 'components/' + content + '-pages/list',
+            basePath: 'modules/' + content + '-pages/list',
             withActivator: true,
             title: options.listTitle
         });
