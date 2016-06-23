@@ -211,7 +211,7 @@
       value: function validate() {
         var _this4 = this;
 
-        this.validateInner().then(function (isValid) {
+        return this.validateInner().then(function (isValid) {
           if (!isValid) {
             return _this4.prepareScreenForValidationErrors();
           }
