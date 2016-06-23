@@ -142,7 +142,7 @@ class ContentEditPageBaseViewModel {
           return this.prepareScreenForValidationErrors();
         }
 
-        return Promise.resolve();
+        return Promise.resolve(true);
       });
   }
 
@@ -464,7 +464,9 @@ class ContentEditPageBaseViewModel {
 
       $('html, body').animate({
         scrollTop: 0
-      }, resolve);
+      }, () => {
+        resolve(false);
+      });
     });
   }
 

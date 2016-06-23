@@ -216,7 +216,7 @@
             return _this4.prepareScreenForValidationErrors();
           }
 
-          return Promise.resolve();
+          return Promise.resolve(true);
         });
       }
     }, {
@@ -573,7 +573,9 @@
 
           (0, _jquery2.default)('html, body').animate({
             scrollTop: 0
-          }, resolve);
+          }, function () {
+            resolve(false);
+          });
         });
       }
     }, {
