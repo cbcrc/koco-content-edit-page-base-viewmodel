@@ -136,7 +136,7 @@ class ContentEditPageBaseViewModel {
   }
 
   validate() {
-    this.validateInner()
+    return this.validateInner()
       .then(isValid => {
         if (!isValid) {
           return this.prepareScreenForValidationErrors();
