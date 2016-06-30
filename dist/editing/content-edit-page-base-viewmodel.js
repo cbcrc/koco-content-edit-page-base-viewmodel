@@ -144,11 +144,11 @@
 
     _createClass(ContentEditPageBaseViewModel, [{
       key: 'activate',
-      value: function activate(context) {
+      value: function activate() {
         var _this2 = this;
 
         return this.loadLookups().then(function () {
-          return _this2.loadContent(context.route.urlParams[0].id);
+          return _this2.loadContent(_this2.route.urlParams[0].id);
         }).then(function () {
           return _this2.afterContentLoaded();
         }).then(function () {
