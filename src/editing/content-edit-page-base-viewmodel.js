@@ -394,13 +394,13 @@ class ContentEditPageBaseViewModel {
   onUpdateFail(writeModel, id, ex) {
     switch (ex.response.status) {
       case 400:
-        return this.handleServerValidationErrors(ex.response.json());
+        return this.handleServerValidationErrors(ex.response.body);
 
       case 406:
-        return this.handleServerValidationErrors([ex.response.json()]);
+        return this.handleServerValidationErrors([ex.response.body]);
 
       case 409: // Version conflict
-        return this.handleSaveConflict(writeModel, ex.response.json());
+        return this.handleSaveConflict(writeModel, ex.response.body);
 
       default:
         return this.handleUnknownError(ex);
@@ -410,9 +410,9 @@ class ContentEditPageBaseViewModel {
   onCreateFail(ex) {
     switch (ex.response.status) {
       case 400:
-        return this.handleServerValidationErrors(ex.response.json());
+        return this.handleServerValidationErrors(ex.response.body);
       case 406:
-        return this.handleServerValidationErrors([ex.response.json()]);
+        return this.handleServerValidationErrors([ex.response.body]);
       default:
         return this.handleUnknownError(ex);
     }
