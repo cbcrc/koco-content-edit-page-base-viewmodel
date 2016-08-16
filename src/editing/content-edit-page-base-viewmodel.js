@@ -420,6 +420,8 @@ define([
             var self = this;
 
             return self.loadContent(id).then(function() {
+              return self.afterContentLoaded();
+            }).then(function() {
                 var route = router.viewModel().route;
 
                 var url = self.apiResourceName + '/edit';
@@ -543,7 +545,9 @@ define([
 
             toastr.success(self.settings.contentUpdatedMessage);
 
-            return self.loadContent(id);
+            return self.loadContent(id).then(function() {
+              return self.afterContentLoaded();
+            });
         };
 
         //todo: rename async
