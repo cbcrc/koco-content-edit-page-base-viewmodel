@@ -417,6 +417,8 @@
         var _this6 = this;
 
         return this.loadContent(id).then(function () {
+          return _this6.afterContentLoaded();
+        }).then(function () {
           var route = _koco2.default.router.context().route;
           var url = _this6.apiResourceName + '/edit';
           var defaultOptions = {
@@ -463,6 +465,8 @@
           body: JSON.stringify(writeModel)
         }).then(function (data) {
           return _this8.onUpdateSuccess(id, data);
+        }).then(function () {
+          return self.afterContentLoaded();
         }).catch(function (ex) {
           return _this8.onUpdateFail(writeModel, id, ex);
         });

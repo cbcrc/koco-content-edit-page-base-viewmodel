@@ -331,20 +331,22 @@ class ContentEditPageBaseViewModel {
   }
 
   reload(id) {
-    return this.loadContent(id).then(() => {
-      const route = koco.router.context().route;
-      const url = `${this.apiResourceName}/edit`;
-      const defaultOptions = {
-        url: route.url.replace(new RegExp(url, 'i'), `${url}/${id}`),
-        pageTitle: koco.router.context().pageTitle,
-        stateObject: {},
-        replace: true
-      };
+    return this.loadContent(id)
+      .then(() => this.afterContentLoaded())
+      .then(() => {
+        const route = koco.router.context().route;
+        const url = `${this.apiResourceName}/edit`;
+        const defaultOptions = {
+          url: route.url.replace(new RegExp(url, 'i'), `${url}/${id}`),
+          pageTitle: koco.router.context().pageTitle,
+          stateObject: {},
+          replace: true
+        };
 
-      koco.router.setUrlSilently(defaultOptions);
+        koco.router.setUrlSilently(defaultOptions);
 
-      return this.refresh();
-    });
+        return this.refresh();
+      });
   }
 
   create(writeModel) {
@@ -370,6 +372,7 @@ class ContentEditPageBaseViewModel {
         body: JSON.stringify(writeModel)
       })
       .then(data => this.onUpdateSuccess(id, data))
+      .then(() => self.afterContentLoaded())
       .catch(ex => this.onUpdateFail(writeModel, id, ex));
   }
 
