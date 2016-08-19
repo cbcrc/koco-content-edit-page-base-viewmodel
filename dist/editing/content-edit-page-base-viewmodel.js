@@ -466,7 +466,7 @@
         }).then(function (data) {
           return _this8.onUpdateSuccess(id, data);
         }).then(function () {
-          return self.afterContentLoaded();
+          return _this8.afterContentLoaded();
         }).catch(function (ex) {
           return _this8.onUpdateFail(writeModel, id, ex);
         });
@@ -496,31 +496,39 @@
     }, {
       key: 'onUpdateFail',
       value: function onUpdateFail(writeModel, id, ex) {
-        switch (ex.response.status) {
-          case 400:
-            return this.handleServerValidationErrors(ex.response.body);
+        if (ex.response) {
+          switch (ex.response.status) {
+            case 400:
+              return this.handleServerValidationErrors(ex.response.body);
 
-          case 406:
-            return this.handleServerValidationErrors([ex.response.body]);
+            case 406:
+              return this.handleServerValidationErrors([ex.response.body]);
 
-          case 409:
-            // Version conflict
-            return this.handleSaveConflict(writeModel, ex.response.body);
+            case 409:
+              // Version conflict
+              return this.handleSaveConflict(writeModel, ex.response.body);
 
-          default:
-            return this.handleUnknownError(ex);
+            default:
+              return this.handleUnknownError(ex);
+          }
+        } else {
+          return this.handleUnknownError(ex);
         }
       }
     }, {
       key: 'onCreateFail',
       value: function onCreateFail(ex) {
-        switch (ex.response.status) {
-          case 400:
-            return this.handleServerValidationErrors(ex.response.body);
-          case 406:
-            return this.handleServerValidationErrors([ex.response.body]);
-          default:
-            return this.handleUnknownError(ex);
+        if (ex.response) {
+          switch (ex.response.status) {
+            case 400:
+              return this.handleServerValidationErrors(ex.response.body);
+            case 406:
+              return this.handleServerValidationErrors([ex.response.body]);
+            default:
+              return this.handleUnknownError(ex);
+          }
+        } else {
+          return this.handleUnknownError(ex);
         }
       }
     }, {

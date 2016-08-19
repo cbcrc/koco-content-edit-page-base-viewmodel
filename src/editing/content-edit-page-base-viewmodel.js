@@ -372,7 +372,7 @@ class ContentEditPageBaseViewModel {
         body: JSON.stringify(writeModel)
       })
       .then(data => this.onUpdateSuccess(id, data))
-      .then(() => self.afterContentLoaded())
+      .then(() => this.afterContentLoaded())
       .catch(ex => this.onUpdateFail(writeModel, id, ex));
   }
 
@@ -395,29 +395,37 @@ class ContentEditPageBaseViewModel {
   }
 
   onUpdateFail(writeModel, id, ex) {
-    switch (ex.response.status) {
-      case 400:
-        return this.handleServerValidationErrors(ex.response.body);
+    if (ex.response) {
+      switch (ex.response.status) {
+        case 400:
+          return this.handleServerValidationErrors(ex.response.body);
 
-      case 406:
-        return this.handleServerValidationErrors([ex.response.body]);
+        case 406:
+          return this.handleServerValidationErrors([ex.response.body]);
 
-      case 409: // Version conflict
-        return this.handleSaveConflict(writeModel, ex.response.body);
+        case 409: // Version conflict
+          return this.handleSaveConflict(writeModel, ex.response.body);
 
-      default:
-        return this.handleUnknownError(ex);
+        default:
+          return this.handleUnknownError(ex);
+      }
+    } else {
+      return this.handleUnknownError(ex);
     }
   }
 
   onCreateFail(ex) {
-    switch (ex.response.status) {
-      case 400:
-        return this.handleServerValidationErrors(ex.response.body);
-      case 406:
-        return this.handleServerValidationErrors([ex.response.body]);
-      default:
-        return this.handleUnknownError(ex);
+    if (ex.response) {
+      switch (ex.response.status) {
+        case 400:
+          return this.handleServerValidationErrors(ex.response.body);
+        case 406:
+          return this.handleServerValidationErrors([ex.response.body]);
+        default:
+          return this.handleUnknownError(ex);
+      }
+    } else {
+      return this.handleUnknownError(ex);
     }
   }
 
