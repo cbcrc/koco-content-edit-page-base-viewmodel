@@ -12,6 +12,7 @@ import arrayUtilities from 'koco-array-utilities';
 import validationUtilities from 'validation-utilities';
 import Disposer from 'koco-disposer';
 import httpUtilities from 'koco-http-utilities';
+import i18n from 'i18next';
 
 const defaultSettings = {
   tinymcePropertyNames: [],
@@ -43,7 +44,15 @@ class ContentEditPageBaseViewModel {
     this.route = context.route;
 
     this.settings = $.extend({}, defaultSettings, settings);
-
+    if (i18n) {
+      this.settings.quitConfirmMessage = i18n.t('koco-content-management.quit_confirm_message');
+      this.settings.contentCreatedMessage = i18n.t('koco-content-management.content_created_message');
+      this.settings.contentUpdatedMessage = i18n.t('koco-content-management.content_updated_message');
+      this.settings.validationErrorsMessage = i18n.t('koco-content-management.validation_errors_message');
+      this.settings.unknownErrorMessage = i18n.t('koco-content-management.unknown_error_message');
+      this.settings.confirmQuitButtonText = i18n.t('koco-content-management.confirm_quit_button_text');
+    }
+		
     this.ignoreDispose = false;
 
     this.apiQueryParams = this.settings.apiQueryParams;

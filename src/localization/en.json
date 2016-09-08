@@ -1,0 +1,8 @@
+{
+  "quit_confirm_message": "Your changes might be lost if you leave this page.",
+  "content_created_message": "The content has been saved.",
+  "content_updated_message": "The content has been saved .",
+  "validation_errors_message": "There is errors in the form. Please fix it.",
+  "unknown_error_message" : "An unknown type of error occurred :",
+  "confirm_quit_button_text": "Leave"
+}
