@@ -1,16 +1,16 @@
 (function (global, factory) {
   if (typeof define === "function" && define.amd) {
-    define(['exports', 'knockout', 'jquery', 'lodash', 'koco-mapping-utilities', 'koco', 'toastr', 'koco-modaler', 'koco-array-utilities', 'validation-utilities', 'koco-disposer', 'koco-http-utilities'], factory);
+    define(['exports', 'knockout', 'jquery', 'lodash', 'koco-mapping-utilities', 'koco', 'toastr', 'koco-modaler', 'koco-array-utilities', 'validation-utilities', 'koco-disposer', 'koco-http-utilities', 'i18next'], factory);
   } else if (typeof exports !== "undefined") {
-    factory(exports, require('knockout'), require('jquery'), require('lodash'), require('koco-mapping-utilities'), require('koco'), require('toastr'), require('koco-modaler'), require('koco-array-utilities'), require('validation-utilities'), require('koco-disposer'), require('koco-http-utilities'));
+    factory(exports, require('knockout'), require('jquery'), require('lodash'), require('koco-mapping-utilities'), require('koco'), require('toastr'), require('koco-modaler'), require('koco-array-utilities'), require('validation-utilities'), require('koco-disposer'), require('koco-http-utilities'), require('i18next'));
   } else {
     var mod = {
       exports: {}
     };
-    factory(mod.exports, global.knockout, global.jquery, global.lodash, global.kocoMappingUtilities, global.koco, global.toastr, global.kocoModaler, global.kocoArrayUtilities, global.validationUtilities, global.kocoDisposer, global.kocoHttpUtilities);
+    factory(mod.exports, global.knockout, global.jquery, global.lodash, global.kocoMappingUtilities, global.koco, global.toastr, global.kocoModaler, global.kocoArrayUtilities, global.validationUtilities, global.kocoDisposer, global.kocoHttpUtilities, global.i18next);
     global.contentEditPageBaseViewmodel = mod.exports;
   }
-})(this, function (exports, _knockout, _jquery, _lodash, _kocoMappingUtilities, _koco, _toastr, _kocoModaler, _kocoArrayUtilities, _validationUtilities, _kocoDisposer, _kocoHttpUtilities) {
+})(this, function (exports, _knockout, _jquery, _lodash, _kocoMappingUtilities, _koco, _toastr, _kocoModaler, _kocoArrayUtilities, _validationUtilities, _kocoDisposer, _kocoHttpUtilities, _i18next) {
   'use strict';
 
   Object.defineProperty(exports, "__esModule", {
@@ -38,6 +38,8 @@
   var _kocoDisposer2 = _interopRequireDefault(_kocoDisposer);
 
   var _kocoHttpUtilities2 = _interopRequireDefault(_kocoHttpUtilities);
+
+  var _i18next2 = _interopRequireDefault(_i18next);
 
   function _interopRequireDefault(obj) {
     return obj && obj.__esModule ? obj : {
@@ -103,6 +105,14 @@
       this.route = context.route;
 
       this.settings = _jquery2.default.extend({}, defaultSettings, settings);
+      if (_i18next2.default) {
+        this.settings.quitConfirmMessage = _i18next2.default.t('koco-content-management.quit_confirm_message');
+        this.settings.contentCreatedMessage = _i18next2.default.t('koco-content-management.content_created_message');
+        this.settings.contentUpdatedMessage = _i18next2.default.t('koco-content-management.content_updated_message');
+        this.settings.validationErrorsMessage = _i18next2.default.t('koco-content-management.validation_errors_message');
+        this.settings.unknownErrorMessage = _i18next2.default.t('koco-content-management.unknown_error_message');
+        this.settings.confirmQuitButtonText = _i18next2.default.t('koco-content-management.confirm_quit_button_text');
+      }
 
       this.ignoreDispose = false;
 

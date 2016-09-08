@@ -1,0 +1,8 @@
+{
+  "quit_confirm_message": "Si vous quitter cette page, vos changements seront perdus.",
+  "content_created_message": "Le contenu a été sauvegardé.",
+  "content_updated_message": "Le contenu a été sauvegardé.",
+  "validation_errors_message": "Le formulaire comporte des erreurs. Veuillez les corriger.",
+  "unknown_error_message" : "Une erreur de type inconnu est survenu: ",
+  "confirm_quit_button_text": "Quitter"
+}
