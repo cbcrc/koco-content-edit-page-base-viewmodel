@@ -11,7 +11,6 @@ import modaler from 'koco-modaler';
 import arrayUtilities from 'koco-array-utilities';
 import validationUtilities from 'validation-utilities';
 import Disposer from 'koco-disposer';
-import httpUtilities from 'koco-http-utilities';
 import i18n from 'i18next';
 
 const defaultSettings = {
@@ -52,7 +51,7 @@ class ContentEditPageBaseViewModel {
       this.settings.unknownErrorMessage = i18n.t('koco-content-management.unknown_error_message');
       this.settings.confirmQuitButtonText = i18n.t('koco-content-management.confirm_quit_button_text');
     }
-		
+
     this.ignoreDispose = false;
 
     this.apiQueryParams = this.settings.apiQueryParams;
