@@ -353,7 +353,7 @@ class ContentEditPageBaseViewModel {
 
         koco.router.setUrlSilently(defaultOptions);
 
-        return this.refresh();
+        return koco.router.reload();
       });
   }
 
@@ -389,17 +389,6 @@ class ContentEditPageBaseViewModel {
     toastr.success(this.settings.contentCreatedMessage);
 
     return this.reload(id);
-  }
-
-  refresh() {
-    return new Promise((resolve) => {
-      // hack!!! - todo: koco.router to be the creator of the viewmodel - refactoring maxime
-      this.ignoreDispose = true;
-      // hack pour rafraichir le formulaire car certain components ne supportent pas bien le two-way data binding!!!! - problematique!
-      const viewModel = koco.router.context();
-      koco.router.context(viewModel);
-      resolve();
-    });
   }
 
   onUpdateFail(writeModel, id, ex) {

@@ -438,7 +438,7 @@
 
           _koco2.default.router.setUrlSilently(defaultOptions);
 
-          return _this6.refresh();
+          return _koco2.default.router.reload();
         });
       }
     }, {
@@ -486,20 +486,6 @@
         _toastr2.default.success(this.settings.contentCreatedMessage);
 
         return this.reload(id);
-      }
-    }, {
-      key: 'refresh',
-      value: function refresh() {
-        var _this9 = this;
-
-        return new Promise(function (resolve) {
-          // hack!!! - todo: koco.router to be the creator of the viewmodel - refactoring maxime
-          _this9.ignoreDispose = true;
-          // hack pour rafraichir le formulaire car certain components ne supportent pas bien le two-way data binding!!!! - problematique!
-          var viewModel = _koco2.default.router.context();
-          _koco2.default.router.context(viewModel);
-          resolve();
-        });
       }
     }, {
       key: 'onUpdateFail',
@@ -582,13 +568,13 @@
     }, {
       key: 'prepareScreenForValidationErrors',
       value: function prepareScreenForValidationErrors() {
-        var _this10 = this;
+        var _this9 = this;
 
         return new Promise(function (resolve) {
-          _toastr2.default.error(_this10.settings.validationErrorsMessage);
+          _toastr2.default.error(_this9.settings.validationErrorsMessage);
 
-          if (_this10.selectFirstTabWithValidationErrors) {
-            _this10.selectFirstTabWithValidationErrors();
+          if (_this9.selectFirstTabWithValidationErrors) {
+            _this9.selectFirstTabWithValidationErrors();
           }
 
           (0, _jquery2.default)('html, body').animate({
@@ -651,7 +637,7 @@
     }, {
       key: 'loadContentInner',
       value: function loadContentInner(apiEndpointUrl) {
-        var _this11 = this;
+        var _this10 = this;
 
         if (apiEndpointUrl) {
           var url = apiEndpointUrl;
@@ -662,7 +648,7 @@
           }
 
           return this.api.fetch(apiEndpointUrl).then(function (content) {
-            return _this11.onContentLoaded(content);
+            return _this10.onContentLoaded(content);
           });
         }
 
