@@ -34,7 +34,7 @@
     "toastr": "^2.1.2"
   },
   "peerDependencies": {
-    "koco": "^1.0.0"
+    "koco": "^2.0.0"
   },
   "main": "src/content-management.js",
   "resolutions": {
