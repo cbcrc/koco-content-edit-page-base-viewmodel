@@ -429,8 +429,13 @@
         }).then(function () {
           var route = _koco2.default.router.context().route;
           var url = _this6.apiResourceName + '/edit';
+          var urlToReplace = url;
+
+          if (route.url.indexOf(id) > -1) {
+            urlToReplace = url + '/' + id;
+          }
           var defaultOptions = {
-            url: route.url.replace(new RegExp(url, 'i'), url + '/' + id),
+            url: route.url.replace(new RegExp(urlToReplace, 'i'), url + '/' + id),
             pageTitle: _koco2.default.router.context().pageTitle,
             stateObject: {},
             replace: true
