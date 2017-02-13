@@ -345,9 +345,9 @@ class ContentEditPageBaseViewModel {
         const route = koco.router.context().route;
         const url = `${this.apiResourceName}/edit`;
         let urlToReplace = url;
-        
-        if(route.url.indexOf(id) > -1){
-          urlToReplace = `${url}/${id}`
+
+        if (route.url.indexOf(id) > -1) {
+          urlToReplace = `${url}/${id}`;
         }
         const defaultOptions = {
           url: route.url.replace(new RegExp(urlToReplace, 'i'), `${url}/${id}`),

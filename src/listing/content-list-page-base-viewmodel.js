@@ -45,7 +45,6 @@ function updatePagingInfoFromQueryParams(self, queryParams) {
 ContentListPageBaseViewModel.prototype = Object.create(ListBaseViewModel.prototype);
 ContentListPageBaseViewModel.prototype.contructor = ContentListPageBaseViewModel;
 
-// todo: rename async here & inside koco.router
 ContentListPageBaseViewModel.prototype.activate = function() {
   return this.loadLookups()
     .then(() => {

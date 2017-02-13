@@ -76,7 +76,6 @@
   ContentListPageBaseViewModel.prototype = Object.create(_kocoListBaseViewmodel2.default.prototype);
   ContentListPageBaseViewModel.prototype.contructor = ContentListPageBaseViewModel;
 
-  // todo: rename async here & inside koco.router
   ContentListPageBaseViewModel.prototype.activate = function () {
     var _this = this;
 
