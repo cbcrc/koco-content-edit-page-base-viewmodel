@@ -83,7 +83,7 @@
   };
 
   var ContentEditPageBaseViewModel = function () {
-    function ContentEditPageBaseViewModel(context, componentInfo, api, apiResourceName, observableContent, settings) {
+    function ContentEditPageBaseViewModel(params, componentInfo, api, apiResourceName, observableContent, settings) {
       var _this = this;
 
       _classCallCheck(this, ContentEditPageBaseViewModel);
@@ -100,7 +100,7 @@
         throw new Error('ContentEditPageBaseViewModel - missing api observable content');
       }
 
-      this.route = context.route;
+      this.route = params.route;
 
       this.settings = _jquery2.default.extend({}, defaultSettings, settings);
       if (_i18next2.default) {

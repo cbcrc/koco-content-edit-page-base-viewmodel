@@ -41,7 +41,7 @@
     };
   }
 
-  var ContentListPageBaseViewModel = function ContentListPageBaseViewModel(context, componentInfo, api, apiResourceName, settings) {
+  var ContentListPageBaseViewModel = function ContentListPageBaseViewModel(params, componentInfo, api, apiResourceName, settings) {
     var self = this;
 
     self.skipUpdateUrlOneTime = false;
@@ -50,7 +50,7 @@
     self.returnUrl = _knockout2.default.observable('');
     self.returnTitle = _knockout2.default.observable('');
 
-    this.route = context.route;
+    this.route = params.route;
 
     _kocoListBaseViewmodel2.default.call(self, api, apiResourceName, settings);
 
