@@ -50,7 +50,10 @@
     self.returnUrl = _knockout2.default.observable('');
     self.returnTitle = _knockout2.default.observable('');
 
-    this.route = params.route;
+    // attention: params.route est fixe - peut �tre en d�synchronisation avec la route actuelle
+    this.route = _knockout2.default.pureComputed(function () {
+      return !_koco2.default.router.isActivating() && _koco2.default.router.context() ? _koco2.default.router.context().route : params.route;
+    });
 
     _kocoListBaseViewmodel2.default.call(self, api, apiResourceName, settings);
 
@@ -178,7 +181,7 @@
   ContentListPageBaseViewModel.prototype.initSearchArgumentsAndPagingInfo = function () {
     var _this2 = this;
 
-    var currentQueryParams = new _kocoQuery2.default(this.route.url).params;
+    var currentQueryParams = new _kocoQuery2.default(this.route().url).params;
 
     if (currentQueryParams && !_lodash2.default.isEmpty(currentQueryParams)) {
       if (this.settings.pageable) {
@@ -206,7 +209,7 @@
   ContentListPageBaseViewModel.prototype.getUrlWithUpdatedQueryString = function () {
     var self = this;
 
-    var route = !_koco2.default.router.isActivating() && _koco2.default.router.context() ? _koco2.default.router.context().route : self.route;
+    var route = self.route();
     var routeUrl = route.url;
     var currentQuery = new _kocoQuery2.default(route.url);
     var currentQueryString = currentQuery.toString();

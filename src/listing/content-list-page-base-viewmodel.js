@@ -20,7 +20,8 @@ var ContentListPageBaseViewModel = function(params, componentInfo, api, apiResou
   self.returnUrl = ko.observable('');
   self.returnTitle = ko.observable('');
 
-  this.route = params.route;
+  // attention: params.route est fixe - peut être en désynchronisation avec la route actuelle
+  this.route = ko.pureComputed(() => (!koco.router.isActivating() && koco.router.context() ? koco.router.context().route : params.route));
 
   ListBaseViewModel.call(self, api, apiResourceName, settings);
 
@@ -145,7 +146,7 @@ ContentListPageBaseViewModel.prototype.deserializeSearchArguments = function(ser
 
 //todo: rename async
 ContentListPageBaseViewModel.prototype.initSearchArgumentsAndPagingInfo = function() {
-  const currentQueryParams = new Query(this.route.url).params;
+  const currentQueryParams = new Query(this.route().url).params;
 
   if (currentQueryParams && !_.isEmpty(currentQueryParams)) {
     if (this.settings.pageable) {
@@ -175,7 +176,7 @@ ContentListPageBaseViewModel.prototype.updateUrlWithSearchArguments = function()
 ContentListPageBaseViewModel.prototype.getUrlWithUpdatedQueryString = function() {
   var self = this;
 
-  var route = !koco.router.isActivating() && koco.router.context() ? koco.router.context().route : self.route;
+  var route = self.route();
   var routeUrl = route.url;
   var currentQuery = new Query(route.url);
   var currentQueryString = currentQuery.toString();

@@ -100,7 +100,10 @@
         throw new Error('ContentEditPageBaseViewModel - missing api observable content');
       }
 
-      this.route = params.route;
+      // attention: params.route est fixe - peut être en désynchronisation avec la route actuelle
+      this.route = _knockout2.default.pureComputed(function () {
+        return !_koco2.default.router.isActivating() && _koco2.default.router.context() ? _koco2.default.router.context().route : params.route;
+      });
 
       this.settings = _jquery2.default.extend({}, defaultSettings, settings);
       if (_i18next2.default) {
@@ -156,7 +159,7 @@
         var _this2 = this;
 
         return this.loadLookups().then(function () {
-          return _this2.loadContent(_this2.route.urlParams[0].id);
+          return _this2.loadContent(_this2.route().urlParams[0].id);
         }).then(function () {
           return _this2.afterContentLoaded();
         }).then(function () {
@@ -427,22 +430,6 @@
         return this.loadContent(id).then(function () {
           return _this6.afterContentLoaded();
         }).then(function () {
-          var route = _koco2.default.router.context().route;
-          var url = _this6.apiResourceName + '/edit';
-          var urlToReplace = url;
-
-          if (route.url.indexOf(id) > -1) {
-            urlToReplace = url + '/' + id;
-          }
-          var defaultOptions = {
-            url: route.url.replace(new RegExp(urlToReplace, 'i'), url + '/' + id),
-            pageTitle: _koco2.default.router.context().pageTitle,
-            stateObject: {},
-            replace: true
-          };
-
-          _koco2.default.router.setUrlSilently(defaultOptions);
-
           return _koco2.default.router.reload();
         });
       }
@@ -487,10 +474,27 @@
     }, {
       key: 'onCreateSuccess',
       value: function onCreateSuccess(id) {
+        var _this9 = this;
+
         this.isChangesWillBeLostConfirmationDisabled = true;
         _toastr2.default.success(this.settings.contentCreatedMessage);
 
-        return this.reload(id);
+        return this.reload(id).then(function () {
+          var route = _koco2.default.router.context().route;
+
+          if (route.url.indexOf(id) === -1) {
+            var urlPartToReplace = _this9.apiResourceName + '/edit';
+
+            var defaultOptions = {
+              url: route.url.replace(new RegExp(urlPartToReplace, 'i'), urlPartToReplace + '/' + id),
+              pageTitle: _koco2.default.router.context().pageTitle,
+              stateObject: {},
+              replace: true
+            };
+
+            _koco2.default.router.setUrlSilently(defaultOptions);
+          }
+        });
       }
     }, {
       key: 'onUpdateFail',
@@ -573,13 +577,13 @@
     }, {
       key: 'prepareScreenForValidationErrors',
       value: function prepareScreenForValidationErrors() {
-        var _this9 = this;
+        var _this10 = this;
 
         return new Promise(function (resolve) {
-          _toastr2.default.error(_this9.settings.validationErrorsMessage);
+          _toastr2.default.error(_this10.settings.validationErrorsMessage);
 
-          if (_this9.selectFirstTabWithValidationErrors) {
-            _this9.selectFirstTabWithValidationErrors();
+          if (_this10.selectFirstTabWithValidationErrors) {
+            _this10.selectFirstTabWithValidationErrors();
           }
 
           (0, _jquery2.default)('html, body').animate({
@@ -642,7 +646,7 @@
     }, {
       key: 'loadContentInner',
       value: function loadContentInner(apiEndpointUrl) {
-        var _this10 = this;
+        var _this11 = this;
 
         if (apiEndpointUrl) {
           var url = apiEndpointUrl;
@@ -653,7 +657,7 @@
           }
 
           return this.api.fetch(apiEndpointUrl).then(function (content) {
-            return _this10.onContentLoaded(content);
+            return _this11.onContentLoaded(content);
           });
         }
 

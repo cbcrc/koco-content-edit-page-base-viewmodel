@@ -40,7 +40,8 @@ class ContentEditPageBaseViewModel {
       throw new Error('ContentEditPageBaseViewModel - missing api observable content');
     }
 
-    this.route = params.route;
+    // attention: params.route est fixe - peut être en désynchronisation avec la route actuelle
+    this.route = ko.pureComputed(() => (!koco.router.isActivating() && koco.router.context() ? koco.router.context().route : params.route));
 
     this.settings = $.extend({}, defaultSettings, settings);
     if (i18n) {
@@ -90,7 +91,7 @@ class ContentEditPageBaseViewModel {
 
   activate() {
     return this.loadLookups()
-      .then(() => this.loadContent(this.route.urlParams[0].id))
+      .then(() => this.loadContent(this.route().urlParams[0].id))
       .then(() => this.afterContentLoaded())
       .then(() => {
         this.finalize();
@@ -341,25 +342,7 @@ class ContentEditPageBaseViewModel {
   reload(id) {
     return this.loadContent(id)
       .then(() => this.afterContentLoaded())
-      .then(() => {
-        const route = koco.router.context().route;
-        const url = `${this.apiResourceName}/edit`;
-        let urlToReplace = url;
-
-        if (route.url.indexOf(id) > -1) {
-          urlToReplace = `${url}/${id}`;
-        }
-        const defaultOptions = {
-          url: route.url.replace(new RegExp(urlToReplace, 'i'), `${url}/${id}`),
-          pageTitle: koco.router.context().pageTitle,
-          stateObject: {},
-          replace: true
-        };
-
-        koco.router.setUrlSilently(defaultOptions);
-
-        return koco.router.reload();
-      });
+      .then(() => koco.router.reload());
   }
 
   create(writeModel) {
@@ -393,7 +376,22 @@ class ContentEditPageBaseViewModel {
     this.isChangesWillBeLostConfirmationDisabled = true;
     toastr.success(this.settings.contentCreatedMessage);
 
-    return this.reload(id);
+    return this.reload(id).then(() => {
+      const route = koco.router.context().route;
+
+      if (route.url.indexOf(id) === -1) {
+        const urlPartToReplace = `${this.apiResourceName}/edit`;
+
+        const defaultOptions = {
+          url: route.url.replace(new RegExp(urlPartToReplace, 'i'), `${urlPartToReplace}/${id}`),
+          pageTitle: koco.router.context().pageTitle,
+          stateObject: {},
+          replace: true
+        };
+
+        koco.router.setUrlSilently(defaultOptions);
+      }
+    });
   }
 
   onUpdateFail(writeModel, id, ex) {
