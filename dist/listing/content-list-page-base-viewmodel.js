@@ -42,6 +42,8 @@
   }
 
   var ContentListPageBaseViewModel = function ContentListPageBaseViewModel(params, componentInfo, api, apiResourceName, settings) {
+    var _this = this;
+
     var self = this;
 
     self.skipUpdateUrlOneTime = false;
@@ -50,9 +52,12 @@
     self.returnUrl = _knockout2.default.observable('');
     self.returnTitle = _knockout2.default.observable('');
 
-    // attention: params.route est fixe - peut �tre en d�synchronisation avec la route actuelle
+    // attention: params.route est fixe
+    // params.route peut être en désynchronisation avec la route actuelle dû à setUrlSilently
     this.route = _knockout2.default.pureComputed(function () {
-      return !_koco2.default.router.isActivating() && _koco2.default.router.context() ? _koco2.default.router.context().route : params.route;
+      var kocoContext = _koco2.default.router.context();
+
+      return !kocoContext || !kocoContext.page || !kocoContext.page.viewModel || kocoContext.page.viewModel !== _this ? params.route : kocoContext.route;
     });
 
     _kocoListBaseViewmodel2.default.call(self, api, apiResourceName, settings);
@@ -80,16 +85,16 @@
   ContentListPageBaseViewModel.prototype.contructor = ContentListPageBaseViewModel;
 
   ContentListPageBaseViewModel.prototype.activate = function () {
-    var _this = this;
+    var _this2 = this;
 
     return this.loadLookups().then(function () {
-      _this.skipUpdateUrlOneTime = true;
+      _this2.skipUpdateUrlOneTime = true;
     }).then(function () {
-      return _this.initSearchArgumentsAndPagingInfo();
+      return _this2.initSearchArgumentsAndPagingInfo();
     }).then(function () {
-      return _this.searchWithFilters();
+      return _this2.searchWithFilters();
     }).catch(function (ex) {
-      _this.handleUnknownError(ex);
+      _this2.handleUnknownError(ex);
       throw ex;
     });
   };
@@ -179,7 +184,7 @@
 
   //todo: rename async
   ContentListPageBaseViewModel.prototype.initSearchArgumentsAndPagingInfo = function () {
-    var _this2 = this;
+    var _this3 = this;
 
     var currentQueryParams = new _kocoQuery2.default(this.route().url).params;
 
@@ -189,8 +194,8 @@
       }
 
       return this.deserializeSearchArguments(currentQueryParams).then(function (deserializedSearchArguments) {
-        var searchArguments = _kocoObjectUtilities2.default.pickInBoth(deserializedSearchArguments.params, _this2.settings.defaultSearchArguments);
-        _knockout2.default.mapping.fromJS(searchArguments, _this2.searchArguments);
+        var searchArguments = _kocoObjectUtilities2.default.pickInBoth(deserializedSearchArguments.params, _this3.settings.defaultSearchArguments);
+        _knockout2.default.mapping.fromJS(searchArguments, _this3.searchArguments);
       });
     }
 

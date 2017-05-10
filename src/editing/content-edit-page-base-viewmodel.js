@@ -40,8 +40,15 @@ class ContentEditPageBaseViewModel {
       throw new Error('ContentEditPageBaseViewModel - missing api observable content');
     }
 
-    // attention: params.route est fixe - peut être en désynchronisation avec la route actuelle
-    this.route = ko.pureComputed(() => (!koco.router.isActivating() && koco.router.context() ? koco.router.context().route : params.route));
+    // attention: params.route est fixe
+    // params.route peut être en désynchronisation avec la route actuelle dû à setUrlSilently
+    this.route = ko.pureComputed(() => {
+      const kocoContext = koco.router.context();
+
+      return (!kocoContext || !kocoContext.page || !kocoContext.page.viewModel || kocoContext.page.viewModel !== this) ?
+        params.route :
+        kocoContext.route;
+    });
 
     this.settings = $.extend({}, defaultSettings, settings);
     if (i18n) {

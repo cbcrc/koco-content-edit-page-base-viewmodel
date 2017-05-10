@@ -100,9 +100,12 @@
         throw new Error('ContentEditPageBaseViewModel - missing api observable content');
       }
 
-      // attention: params.route est fixe - peut être en désynchronisation avec la route actuelle
+      // attention: params.route est fixe
+      // params.route peut être en désynchronisation avec la route actuelle dû à setUrlSilently
       this.route = _knockout2.default.pureComputed(function () {
-        return !_koco2.default.router.isActivating() && _koco2.default.router.context() ? _koco2.default.router.context().route : params.route;
+        var kocoContext = _koco2.default.router.context();
+
+        return !kocoContext || !kocoContext.page || !kocoContext.page.viewModel || kocoContext.page.viewModel !== _this ? params.route : kocoContext.route;
       });
 
       this.settings = _jquery2.default.extend({}, defaultSettings, settings);

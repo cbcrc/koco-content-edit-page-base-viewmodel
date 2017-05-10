@@ -20,8 +20,15 @@ var ContentListPageBaseViewModel = function(params, componentInfo, api, apiResou
   self.returnUrl = ko.observable('');
   self.returnTitle = ko.observable('');
 
-  // attention: params.route est fixe - peut �tre en d�synchronisation avec la route actuelle
-  this.route = ko.pureComputed(() => (!koco.router.isActivating() && koco.router.context() ? koco.router.context().route : params.route));
+  // attention: params.route est fixe
+  // params.route peut être en désynchronisation avec la route actuelle dû à setUrlSilently
+  this.route = ko.pureComputed(() => {
+    const kocoContext = koco.router.context();
+
+    return (!kocoContext || !kocoContext.page || !kocoContext.page.viewModel || kocoContext.page.viewModel !== this) ?
+      params.route :
+      kocoContext.route;
+  });
 
   ListBaseViewModel.call(self, api, apiResourceName, settings);
 
