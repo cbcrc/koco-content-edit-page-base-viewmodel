@@ -352,16 +352,16 @@ class ContentEditPageBaseViewModel {
       .then(() => koco.router.reload());
   }
 
-  create(writeModel) {
+  create(writeModel, options) {
     return this.api.fetch(this.apiResourceName, {
         method: 'POST',
         body: JSON.stringify(writeModel)
       })
-      .then(data => this.onCreateSuccess(data))
+      .then(data => this.onCreateSuccess(data, options))
       .catch(ex => this.onCreateFail(ex));
   }
 
-  update(writeModel) {
+  update(writeModel, options) {
     const id = this.getId();
     let url = `${this.apiResourceName}/${id}`;
 
@@ -374,12 +374,12 @@ class ContentEditPageBaseViewModel {
         method: 'PUT',
         body: JSON.stringify(writeModel)
       })
-      .then(data => this.onUpdateSuccess(id, data))
+      .then(data => this.onUpdateSuccess(id, data, options))
       .then(() => this.afterContentLoaded())
       .catch(ex => this.onUpdateFail(writeModel, id, ex));
   }
 
-  onCreateSuccess(id) {
+  onCreateSuccess(id, options) {
     this.isChangesWillBeLostConfirmationDisabled = true;
     toastr.success(this.settings.contentCreatedMessage);
 

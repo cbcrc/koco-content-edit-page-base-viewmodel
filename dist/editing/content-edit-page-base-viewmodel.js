@@ -438,21 +438,21 @@
       }
     }, {
       key: 'create',
-      value: function create(writeModel) {
+      value: function create(writeModel, options) {
         var _this7 = this;
 
         return this.api.fetch(this.apiResourceName, {
           method: 'POST',
           body: JSON.stringify(writeModel)
         }).then(function (data) {
-          return _this7.onCreateSuccess(data);
+          return _this7.onCreateSuccess(data, options);
         }).catch(function (ex) {
           return _this7.onCreateFail(ex);
         });
       }
     }, {
       key: 'update',
-      value: function update(writeModel) {
+      value: function update(writeModel, options) {
         var _this8 = this;
 
         var id = this.getId();
@@ -467,7 +467,7 @@
           method: 'PUT',
           body: JSON.stringify(writeModel)
         }).then(function (data) {
-          return _this8.onUpdateSuccess(id, data);
+          return _this8.onUpdateSuccess(id, data, options);
         }).then(function () {
           return _this8.afterContentLoaded();
         }).catch(function (ex) {
@@ -476,7 +476,7 @@
       }
     }, {
       key: 'onCreateSuccess',
-      value: function onCreateSuccess(id) {
+      value: function onCreateSuccess(id, options) {
         var _this9 = this;
 
         this.isChangesWillBeLostConfirmationDisabled = true;
