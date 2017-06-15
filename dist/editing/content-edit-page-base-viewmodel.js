@@ -1,16 +1,16 @@
 (function (global, factory) {
   if (typeof define === "function" && define.amd) {
-    define(['exports', 'knockout', 'jquery', 'lodash', 'koco-mapping-utilities', 'koco', 'toastr', 'koco-modaler', 'koco-array-utilities', 'validation-utilities', 'koco-disposer', 'i18next'], factory);
+    define(['exports', 'knockout', 'jquery', 'lodash', 'koco-mapping-utilities', 'koco', 'toastr', 'koco-modaler', 'koco-array-utilities', 'validation-utilities', 'koco-disposer', 'i18next', 'moment'], factory);
   } else if (typeof exports !== "undefined") {
-    factory(exports, require('knockout'), require('jquery'), require('lodash'), require('koco-mapping-utilities'), require('koco'), require('toastr'), require('koco-modaler'), require('koco-array-utilities'), require('validation-utilities'), require('koco-disposer'), require('i18next'));
+    factory(exports, require('knockout'), require('jquery'), require('lodash'), require('koco-mapping-utilities'), require('koco'), require('toastr'), require('koco-modaler'), require('koco-array-utilities'), require('validation-utilities'), require('koco-disposer'), require('i18next'), require('moment'));
   } else {
     var mod = {
       exports: {}
     };
-    factory(mod.exports, global.knockout, global.jquery, global.lodash, global.kocoMappingUtilities, global.koco, global.toastr, global.kocoModaler, global.kocoArrayUtilities, global.validationUtilities, global.kocoDisposer, global.i18next);
+    factory(mod.exports, global.knockout, global.jquery, global.lodash, global.kocoMappingUtilities, global.koco, global.toastr, global.kocoModaler, global.kocoArrayUtilities, global.validationUtilities, global.kocoDisposer, global.i18next, global.moment);
     global.contentEditPageBaseViewmodel = mod.exports;
   }
-})(this, function (exports, _knockout, _jquery, _lodash, _kocoMappingUtilities, _koco, _toastr, _kocoModaler, _kocoArrayUtilities, _validationUtilities, _kocoDisposer, _i18next) {
+})(this, function (exports, _knockout, _jquery, _lodash, _kocoMappingUtilities, _koco, _toastr, _kocoModaler, _kocoArrayUtilities, _validationUtilities, _kocoDisposer, _i18next, _moment) {
   'use strict';
 
   Object.defineProperty(exports, "__esModule", {
@@ -38,6 +38,8 @@
   var _kocoDisposer2 = _interopRequireDefault(_kocoDisposer);
 
   var _i18next2 = _interopRequireDefault(_i18next);
+
+  var _moment2 = _interopRequireDefault(_moment);
 
   function _interopRequireDefault(obj) {
     return obj && obj.__esModule ? obj : {
@@ -254,127 +256,22 @@
         object = _kocoMappingUtilities2.default.toJS(object);
         other = _kocoMappingUtilities2.default.toJS(other);
 
-        if (_lodash2.default.isObject(object) && _lodash2.default.isObject(other)) {
-          var hasHtmlPropertyNames = _kocoArrayUtilities2.default.isNotEmptyArray(htmlPropertyNames);
-          var hasAlikeArraysPropertyNames = _kocoArrayUtilities2.default.isNotEmptyArray(alikeArraysPropertyNames);
-
-          return this.isEqualObject(object, other, htmlPropertyNames, alikeArraysPropertyNames, hasHtmlPropertyNames, hasAlikeArraysPropertyNames);
-        }
-
-        throw new Error('content-utilities - isEqual - this function can only compare objects (_.isObject).');
-      }
-    }, {
-      key: 'isEqualObject',
-      value: function isEqualObject(object, other, htmlPropertyNames, alikeArraysPropertyNames, hasHtmlPropertyNames, hasAlikeArraysPropertyNames) {
-        var propertiesEqual;
-
-        if (_lodash2.default.keys(object).length !== _lodash2.default.keys(other).length) {
-          return false;
-        }
-
-        for (var key in object) {
-          if (object.hasOwnProperty(key)) {
-            if (other.hasOwnProperty(key)) {
-              propertiesEqual = this.isEqualProperty(key, object, other, htmlPropertyNames, alikeArraysPropertyNames, hasHtmlPropertyNames, hasAlikeArraysPropertyNames);
-
-              if (!propertiesEqual) {
-                return false;
-              }
-            } else {
-              return false;
-            }
-          }
-        }
-
-        return true;
-      }
-    }, {
-      key: 'isEqualProperty',
-      value: function isEqualProperty(key, object, other, htmlPropertyNames, alikeArraysPropertyNames, hasHtmlPropertyNames, hasAlikeArraysPropertyNames) {
-        var val1 = object[key];
-        var val2 = other[key];
-
-        if (_lodash2.default.isFunction(val1) || _lodash2.default.isFunction(val2)) {
-          if (!_lodash2.default.isFunction(val1) || !_lodash2.default.isFunction(val2)) {
-            return false;
-          }
-
-          return true; // we do not compare functions...
-        }
-
-        if (_lodash2.default.isArray(val1) || _lodash2.default.isArray(val2)) {
-          if (hasAlikeArraysPropertyNames && _lodash2.default.includes(alikeArraysPropertyNames, key)) {
-            // humm... c'est bon ça!? comparaison boiteuse... pourquoi on fait ça donc? pour ne pas tenir compte de l'ordre des valeurs de l'array!?
-            return val1.length === val2.length && _lodash2.default.intersection(val1, val2).length === val1.length;
-          }
-
-          return val1.length === val2.length && _lodash2.default.every(val1, function (val, i) {
-            // pas de récursion pour les valeurs des array
-            return _lodash2.default.isEqual(val, val2[i]);
-          });
-        }
-
-        if (_lodash2.default.isObject(val1) || _lodash2.default.isObject(val2)) {
-          if (!_lodash2.default.isObject(val1) || !_lodash2.default.isObject(val2)) {
-            return false;
-          } else {
-            return this.isEqualObject(val1, val2, htmlPropertyNames, alikeArraysPropertyNames, hasHtmlPropertyNames, hasAlikeArraysPropertyNames);
-          }
-        }
-
-        if (hasHtmlPropertyNames && _lodash2.default.includes(htmlPropertyNames, key)) {
-          var html1, html2;
-
-          if (val1) {
-            html1 = (0, _jquery2.default)('<div/>').html(val1.replace(/(\r\n|\n|\r)/gm, ''))[0];
-          } else {
-            html1 = (0, _jquery2.default)('<div/>').html(val1)[0];
-          }
-
-          if (val2) {
-            html2 = (0, _jquery2.default)('<div/>').html(val2.replace(/(\r\n|\n|\r)/gm, ''))[0];
-          } else {
-            html2 = (0, _jquery2.default)('<div/>').html(val2)[0];
-          }
-
-          // Attention: IE9+
-          // http://stackoverflow.com/questions/10679762/how-to-compare-two-html-elements/19342581
-          return html1.isEqualNode(html2);
-        }
-
-        return _lodash2.default.isEqual(val1, val2);
+        return JSON.stringify(other) === JSON.stringify(object);
       }
     }, {
       key: 'takeCurrentModelSnapshot',
       value: function takeCurrentModelSnapshot() {
-        var modelSnapshot = this.getModelSnapshot();
-
-        for (var i = 0; i < this.settings.tinymcePropertyNames.length; i++) {
-          var propertyName = this.settings.tinymcePropertyNames[i];
-
-          if (modelSnapshot.hasOwnProperty(propertyName)) {
-            modelSnapshot[propertyName] = this.clearContentFromTinymceSpecificMarkup(modelSnapshot[propertyName]);
-          }
-        }
-
+        var modelSnapshot = this.toOutputModel /* saveOptions */();
         return modelSnapshot;
-      }
-    }, {
-      key: 'clearContentFromTinymceSpecificMarkup',
-      value: function clearContentFromTinymceSpecificMarkup(tinymceContnet) {
-        var $buffer = (0, _jquery2.default)('<div>');
-        $buffer.html(tinymceContnet);
-        $buffer.find('.articleBody').removeClass('articleBody');
-        $buffer.find('.first').removeClass('first');
-        $buffer.find('[itemprop]').removeAttr('itemprop');
-        $buffer.find('*[class=""]').removeAttr('class');
-
-        return $buffer.html();
       }
     }, {
       key: 'takeOriginalModelSnapshot',
       value: function takeOriginalModelSnapshot() {
-        this.originalModelSnapshot(this.takeCurrentModelSnapshot());
+        var _this5 = this;
+
+        setTimeout(function () {
+          _this5.originalModelSnapshot(_this5.takeCurrentModelSnapshot());
+        }, 500);
       }
     }, {
       key: 'getModelSnapshot',
@@ -405,11 +302,11 @@
     }, {
       key: 'onContentLoaded',
       value: function onContentLoaded(content) {
-        var _this5 = this;
+        var _this6 = this;
 
         return new Promise(function (resolve) {
-          _this5.updateObservableContent(content);
-          _this5.takeOriginalModelSnapshot();
+          _this6.updateObservableContent(content);
+          _this6.takeOriginalModelSnapshot();
           resolve();
         });
       }
@@ -428,10 +325,10 @@
     }, {
       key: 'reload',
       value: function reload(id) {
-        var _this6 = this;
+        var _this7 = this;
 
         return this.loadContent(id).then(function () {
-          return _this6.afterContentLoaded();
+          return _this7.afterContentLoaded();
         }).then(function () {
           return _koco2.default.router.reload();
         });
@@ -439,21 +336,21 @@
     }, {
       key: 'create',
       value: function create(writeModel, options) {
-        var _this7 = this;
+        var _this8 = this;
 
         return this.api.fetch(this.apiResourceName, {
           method: 'POST',
           body: JSON.stringify(writeModel)
         }).then(function (data) {
-          return _this7.onCreateSuccess(data, options);
+          return _this8.onCreateSuccess(data, options);
         }).catch(function (ex) {
-          return _this7.onCreateFail(ex);
+          return _this8.onCreateFail(ex);
         });
       }
     }, {
       key: 'update',
       value: function update(writeModel, options) {
-        var _this8 = this;
+        var _this9 = this;
 
         var id = this.getId();
         var url = this.apiResourceName + '/' + id;
@@ -467,17 +364,17 @@
           method: 'PUT',
           body: JSON.stringify(writeModel)
         }).then(function (data) {
-          return _this8.onUpdateSuccess(id, data, options);
+          return _this9.onUpdateSuccess(id, data, options);
         }).then(function () {
-          return _this8.afterContentLoaded();
+          return _this9.afterContentLoaded();
         }).catch(function (ex) {
-          return _this8.onUpdateFail(writeModel, id, ex);
+          return _this9.onUpdateFail(writeModel, id, ex);
         });
       }
     }, {
       key: 'onCreateSuccess',
       value: function onCreateSuccess(id, options) {
-        var _this9 = this;
+        var _this10 = this;
 
         this.isChangesWillBeLostConfirmationDisabled = true;
         _toastr2.default.success(this.settings.contentCreatedMessage);
@@ -486,7 +383,7 @@
           var route = _koco2.default.router.context().route;
 
           if (route.url.indexOf(id) === -1) {
-            var urlPartToReplace = _this9.apiResourceName + '/edit';
+            var urlPartToReplace = _this10.apiResourceName + '/edit';
 
             var defaultOptions = {
               url: route.url.replace(new RegExp(urlPartToReplace, 'i'), urlPartToReplace + '/' + id),
@@ -580,13 +477,13 @@
     }, {
       key: 'prepareScreenForValidationErrors',
       value: function prepareScreenForValidationErrors() {
-        var _this10 = this;
+        var _this11 = this;
 
         return new Promise(function (resolve) {
-          _toastr2.default.error(_this10.settings.validationErrorsMessage);
+          _toastr2.default.error(_this11.settings.validationErrorsMessage);
 
-          if (_this10.selectFirstTabWithValidationErrors) {
-            _this10.selectFirstTabWithValidationErrors();
+          if (_this11.selectFirstTabWithValidationErrors) {
+            _this11.selectFirstTabWithValidationErrors();
           }
 
           (0, _jquery2.default)('html, body').animate({
@@ -649,7 +546,7 @@
     }, {
       key: 'loadContentInner',
       value: function loadContentInner(apiEndpointUrl) {
-        var _this11 = this;
+        var _this12 = this;
 
         if (apiEndpointUrl) {
           var url = apiEndpointUrl;
@@ -660,7 +557,7 @@
           }
 
           return this.api.fetch(apiEndpointUrl).then(function (content) {
-            return _this11.onContentLoaded(content);
+            return _this12.onContentLoaded(content);
           });
         }
 
