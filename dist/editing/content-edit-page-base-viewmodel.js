@@ -1,16 +1,16 @@
 (function (global, factory) {
   if (typeof define === "function" && define.amd) {
-    define(['exports', 'knockout', 'jquery', 'lodash', 'koco-mapping-utilities', 'koco', 'toastr', 'koco-modaler', 'koco-array-utilities', 'validation-utilities', 'koco-disposer', 'i18next', 'moment'], factory);
+    define(['exports', 'knockout', 'jquery', 'lodash', 'koco-mapping-utilities', 'koco', 'toastr', 'koco-modaler', 'koco-array-utilities', 'validation-utilities', 'koco-disposer', 'i18next', 'moment', 'translate-utilities'], factory);
   } else if (typeof exports !== "undefined") {
-    factory(exports, require('knockout'), require('jquery'), require('lodash'), require('koco-mapping-utilities'), require('koco'), require('toastr'), require('koco-modaler'), require('koco-array-utilities'), require('validation-utilities'), require('koco-disposer'), require('i18next'), require('moment'));
+    factory(exports, require('knockout'), require('jquery'), require('lodash'), require('koco-mapping-utilities'), require('koco'), require('toastr'), require('koco-modaler'), require('koco-array-utilities'), require('validation-utilities'), require('koco-disposer'), require('i18next'), require('moment'), require('translate-utilities'));
   } else {
     var mod = {
       exports: {}
     };
-    factory(mod.exports, global.knockout, global.jquery, global.lodash, global.kocoMappingUtilities, global.koco, global.toastr, global.kocoModaler, global.kocoArrayUtilities, global.validationUtilities, global.kocoDisposer, global.i18next, global.moment);
+    factory(mod.exports, global.knockout, global.jquery, global.lodash, global.kocoMappingUtilities, global.koco, global.toastr, global.kocoModaler, global.kocoArrayUtilities, global.validationUtilities, global.kocoDisposer, global.i18next, global.moment, global.translateUtilities);
     global.contentEditPageBaseViewmodel = mod.exports;
   }
-})(this, function (exports, _knockout, _jquery, _lodash, _kocoMappingUtilities, _koco, _toastr, _kocoModaler, _kocoArrayUtilities, _validationUtilities, _kocoDisposer, _i18next, _moment) {
+})(this, function (exports, _knockout, _jquery, _lodash, _kocoMappingUtilities, _koco, _toastr, _kocoModaler, _kocoArrayUtilities, _validationUtilities, _kocoDisposer, _i18next, _moment, _translateUtilities) {
   'use strict';
 
   Object.defineProperty(exports, "__esModule", {
@@ -40,6 +40,8 @@
   var _i18next2 = _interopRequireDefault(_i18next);
 
   var _moment2 = _interopRequireDefault(_moment);
+
+  var _translateUtilities2 = _interopRequireDefault(_translateUtilities);
 
   function _interopRequireDefault(obj) {
     return obj && obj.__esModule ? obj : {
@@ -111,13 +113,17 @@
       });
 
       this.settings = _jquery2.default.extend({}, defaultSettings, settings);
+      this.getMessageOverride = function (message) {
+        return message && _translateUtilities2.default.translate(message);
+      };
+
       if (_i18next2.default) {
-        this.settings.quitConfirmMessage = _i18next2.default.t('koco-content-management.quit_confirm_message');
-        this.settings.contentCreatedMessage = _i18next2.default.t('koco-content-management.content_created_message');
-        this.settings.contentUpdatedMessage = _i18next2.default.t('koco-content-management.content_updated_message');
-        this.settings.validationErrorsMessage = _i18next2.default.t('koco-content-management.validation_errors_message');
-        this.settings.unknownErrorMessage = _i18next2.default.t('koco-content-management.unknown_error_message');
-        this.settings.confirmQuitButtonText = _i18next2.default.t('koco-content-management.confirm_quit_button_text');
+        this.settings.quitConfirmMessage = this.getMessageOverride(settings.quitConfirmMessage) || _i18next2.default.t('koco-content-management.quit_confirm_message');
+        this.settings.contentCreatedMessage = this.getMessageOverride(settings.contentCreatedMessage) || _i18next2.default.t('koco-content-management.content_created_message');
+        this.settings.contentUpdatedMessage = this.getMessageOverride(settings.contentUpdatedMessage) || _i18next2.default.t('koco-content-management.content_updated_message');
+        this.settings.validationErrorsMessage = this.getMessageOverride(settings.validationErrorsMessage) || _i18next2.default.t('koco-content-management.validation_errors_message');
+        this.settings.unknownErrorMessage = this.getMessageOverride(settings.unknownErrorMessage) || _i18next2.default.t('koco-content-management.unknown_error_message');
+        this.settings.confirmQuitButtonText = this.getMessageOverride(settings.confirmQuitButtonText) || _i18next2.default.t('koco-content-management.confirm_quit_button_text');
       }
 
       this.ignoreDispose = false;
@@ -261,7 +267,7 @@
     }, {
       key: 'takeCurrentModelSnapshot',
       value: function takeCurrentModelSnapshot() {
-        var modelSnapshot = this.toOutputModel /* saveOptions */();
+        var modelSnapshot = this.toOutputModel();
         return modelSnapshot;
       }
     }, {
