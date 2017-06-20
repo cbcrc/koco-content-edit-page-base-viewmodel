@@ -349,7 +349,17 @@ class ContentEditPageBaseViewModel {
   reload(id) {
     return this.loadContent(id)
       .then(() => this.afterContentLoaded())
-      .then(() => koco.router.reload());
+      .then(() => {
+        // quick fix
+        // Bug 85624:CQ (Prod) - SCOOP/Nouvelles - brouillon, au moment d'écrire sur la section texte,
+        //                       le formulaire saute et ne pas possible de continuer a écrire
+        koco.router.setUrlSilently({
+          url: koco.router.route().url,
+          replace: true
+        });
+
+        return koco.router.reload();
+      });
   }
 
   create(writeModel, options) {
