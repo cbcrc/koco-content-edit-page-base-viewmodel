@@ -13,6 +13,7 @@ import validationUtilities from 'validation-utilities';
 import Disposer from 'koco-disposer';
 import i18n from 'i18next';
 import moment from 'moment';
+import translateUtilities from 'translate-utilities';
 
 const defaultSettings = {
   tinymcePropertyNames: [],
@@ -52,13 +53,15 @@ class ContentEditPageBaseViewModel {
     });
 
     this.settings = $.extend({}, defaultSettings, settings);
+    this.getMessageOverride = (message) => message && translateUtilities.translate(message);
+    
     if (i18n) {
-      this.settings.quitConfirmMessage = i18n.t('koco-content-management.quit_confirm_message');
-      this.settings.contentCreatedMessage = i18n.t('koco-content-management.content_created_message');
-      this.settings.contentUpdatedMessage = i18n.t('koco-content-management.content_updated_message');
-      this.settings.validationErrorsMessage = i18n.t('koco-content-management.validation_errors_message');
-      this.settings.unknownErrorMessage = i18n.t('koco-content-management.unknown_error_message');
-      this.settings.confirmQuitButtonText = i18n.t('koco-content-management.confirm_quit_button_text');
+      this.settings.quitConfirmMessage = this.getMessageOverride(settings.quitConfirmMessage)  || i18n.t('koco-content-management.quit_confirm_message');
+      this.settings.contentCreatedMessage = this.getMessageOverride(settings.contentCreatedMessage) || i18n.t('koco-content-management.content_created_message');
+      this.settings.contentUpdatedMessage = this.getMessageOverride(settings.contentUpdatedMessage) || i18n.t('koco-content-management.content_updated_message');
+      this.settings.validationErrorsMessage = this.getMessageOverride(settings.validationErrorsMessage) || i18n.t('koco-content-management.validation_errors_message');
+      this.settings.unknownErrorMessage = this.getMessageOverride(settings.unknownErrorMessage) || i18n.t('koco-content-management.unknown_error_message');
+      this.settings.confirmQuitButtonText = this.getMessageOverride(settings.confirmQuitButtonText) || i18n.t('koco-content-management.confirm_quit_button_text');
     }
 
     this.ignoreDispose = false;
