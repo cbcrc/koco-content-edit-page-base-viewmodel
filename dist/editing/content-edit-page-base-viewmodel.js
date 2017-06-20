@@ -336,6 +336,14 @@
         return this.loadContent(id).then(function () {
           return _this7.afterContentLoaded();
         }).then(function () {
+          // quick fix
+          // Bug 85624:CQ (Prod) - SCOOP/Nouvelles - brouillon, au moment d'écrire sur la section texte,
+          //                       le formulaire saute et ne pas possible de continuer a écrire
+          _koco2.default.router.setUrlSilently({
+            url: _koco2.default.router.route().url,
+            replace: true
+          });
+
           return _koco2.default.router.reload();
         });
       }
