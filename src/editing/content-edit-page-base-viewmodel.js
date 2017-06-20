@@ -12,6 +12,8 @@ import arrayUtilities from 'koco-array-utilities';
 import validationUtilities from 'validation-utilities';
 import Disposer from 'koco-disposer';
 import i18n from 'i18next';
+import moment from 'moment';
+import translateUtilities from 'translate-utilities';
 
 const defaultSettings = {
   tinymcePropertyNames: [],
@@ -51,13 +53,15 @@ class ContentEditPageBaseViewModel {
     });
 
     this.settings = $.extend({}, defaultSettings, settings);
+    this.getMessageOverride = (message) => message && translateUtilities.translate(message);
+    
     if (i18n) {
-      this.settings.quitConfirmMessage = i18n.t('koco-content-management.quit_confirm_message');
-      this.settings.contentCreatedMessage = i18n.t('koco-content-management.content_created_message');
-      this.settings.contentUpdatedMessage = i18n.t('koco-content-management.content_updated_message');
-      this.settings.validationErrorsMessage = i18n.t('koco-content-management.validation_errors_message');
-      this.settings.unknownErrorMessage = i18n.t('koco-content-management.unknown_error_message');
-      this.settings.confirmQuitButtonText = i18n.t('koco-content-management.confirm_quit_button_text');
+      this.settings.quitConfirmMessage = this.getMessageOverride(settings.quitConfirmMessage)  || i18n.t('koco-content-management.quit_confirm_message');
+      this.settings.contentCreatedMessage = this.getMessageOverride(settings.contentCreatedMessage) || i18n.t('koco-content-management.content_created_message');
+      this.settings.contentUpdatedMessage = this.getMessageOverride(settings.contentUpdatedMessage) || i18n.t('koco-content-management.content_updated_message');
+      this.settings.validationErrorsMessage = this.getMessageOverride(settings.validationErrorsMessage) || i18n.t('koco-content-management.validation_errors_message');
+      this.settings.unknownErrorMessage = this.getMessageOverride(settings.unknownErrorMessage) || i18n.t('koco-content-management.unknown_error_message');
+      this.settings.confirmQuitButtonText = this.getMessageOverride(settings.confirmQuitButtonText) || i18n.t('koco-content-management.confirm_quit_button_text');
     }
 
     this.ignoreDispose = false;
@@ -166,7 +170,7 @@ class ContentEditPageBaseViewModel {
     return validationUtilities.validateObservables(this.validatedObservables);
   }
 
-  toOutputModel( /*saveOptions*/ ) {
+  toOutputModel( /*saveOptions*/) {
     return mappingUtilities.toJS(this.observableContent);
   }
 
@@ -185,127 +189,23 @@ class ContentEditPageBaseViewModel {
     object = mappingUtilities.toJS(object);
     other = mappingUtilities.toJS(other);
 
-    if (_.isObject(object) && _.isObject(other)) {
-      var hasHtmlPropertyNames = arrayUtilities.isNotEmptyArray(htmlPropertyNames);
-      var hasAlikeArraysPropertyNames = arrayUtilities.isNotEmptyArray(alikeArraysPropertyNames);
-
-      return this.isEqualObject(object, other, htmlPropertyNames, alikeArraysPropertyNames, hasHtmlPropertyNames, hasAlikeArraysPropertyNames);
-    }
-
-    throw new Error('content-utilities - isEqual - this function can only compare objects (_.isObject).');
-  }
-
-  isEqualObject(object, other, htmlPropertyNames, alikeArraysPropertyNames, hasHtmlPropertyNames, hasAlikeArraysPropertyNames) {
-    var propertiesEqual;
-
-    if (_.keys(object).length !== _.keys(other).length) {
-      return false;
-    }
-
-    for (var key in object) {
-      if (object.hasOwnProperty(key)) {
-        if (other.hasOwnProperty(key)) {
-          propertiesEqual = this.isEqualProperty(key, object, other, htmlPropertyNames, alikeArraysPropertyNames, hasHtmlPropertyNames, hasAlikeArraysPropertyNames);
-
-          if (!propertiesEqual) {
-            return false;
-          }
-        } else {
-          return false;
-        }
-      }
-    }
-
-    return true;
-  }
-
-  isEqualProperty(key, object, other, htmlPropertyNames, alikeArraysPropertyNames, hasHtmlPropertyNames, hasAlikeArraysPropertyNames) {
-    var val1 = object[key];
-    var val2 = other[key];
-
-    if (_.isFunction(val1) || _.isFunction(val2)) {
-      if (!_.isFunction(val1) || !_.isFunction(val2)) {
-        return false;
-      }
-
-      return true; // we do not compare functions...
-    }
-
-    if (_.isArray(val1) || _.isArray(val2)) {
-      if (hasAlikeArraysPropertyNames && _.includes(alikeArraysPropertyNames, key)) {
-        // humm... c'est bon ça!? comparaison boiteuse... pourquoi on fait ça donc? pour ne pas tenir compte de l'ordre des valeurs de l'array!?
-        return val1.length === val2.length && _.intersection(val1, val2).length === val1.length;
-      }
-
-      return val1.length === val2.length && _.every(val1, function(val, i) {
-        // pas de récursion pour les valeurs des array
-        return _.isEqual(val, val2[i]);
-      });
-    }
-
-    if (_.isObject(val1) || _.isObject(val2)) {
-      if (!_.isObject(val1) || !_.isObject(val2)) {
-        return false;
-      } else {
-        return this.isEqualObject(val1, val2, htmlPropertyNames, alikeArraysPropertyNames, hasHtmlPropertyNames, hasAlikeArraysPropertyNames);
-      }
-    }
-
-    if (hasHtmlPropertyNames && _.includes(htmlPropertyNames, key)) {
-      var html1, html2;
-
-      if (val1) {
-        html1 = $('<div/>').html(val1.replace(/(\r\n|\n|\r)/gm, ''))[0];
-      } else {
-        html1 = $('<div/>').html(val1)[0];
-      }
-
-      if (val2) {
-        html2 = $('<div/>').html(val2.replace(/(\r\n|\n|\r)/gm, ''))[0];
-      } else {
-        html2 = $('<div/>').html(val2)[0];
-      }
-
-      // Attention: IE9+
-      // http://stackoverflow.com/questions/10679762/how-to-compare-two-html-elements/19342581
-      return html1.isEqualNode(html2);
-    }
-
-    return _.isEqual(val1, val2);
+    return JSON.stringify(other) === JSON.stringify(object);
   }
 
   /*************************************************************/
 
 
   takeCurrentModelSnapshot() {
-    var modelSnapshot = this.getModelSnapshot();
-
-    for (var i = 0; i < this.settings.tinymcePropertyNames.length; i++) {
-      var propertyName = this.settings.tinymcePropertyNames[i];
-
-      if (modelSnapshot.hasOwnProperty(propertyName)) {
-        modelSnapshot[propertyName] = this.clearContentFromTinymceSpecificMarkup(modelSnapshot[propertyName]);
-      }
-    }
-
+    var modelSnapshot = this.toOutputModel(/* saveOptions */);
     return modelSnapshot;
   }
 
-  clearContentFromTinymceSpecificMarkup(tinymceContnet) {
-    const $buffer = $('<div>');
-    $buffer.html(tinymceContnet);
-    $buffer.find('.articleBody').removeClass('articleBody');
-    $buffer.find('.first').removeClass('first');
-    $buffer.find('[itemprop]').removeAttr('itemprop');
-    $buffer.find('*[class=""]').removeAttr('class');
-
-    return $buffer.html();
-  }
-
   takeOriginalModelSnapshot() {
-    this.originalModelSnapshot(this.takeCurrentModelSnapshot());
+    setTimeout(() => {
+      this.originalModelSnapshot(this.takeCurrentModelSnapshot());
+    }, 500);
   }
-
+  
   getModelSnapshot() {
     return mappingUtilities.toJS(this.observableContent);
   }
@@ -364,9 +264,9 @@ class ContentEditPageBaseViewModel {
 
   create(writeModel, options) {
     return this.api.fetch(this.apiResourceName, {
-        method: 'POST',
-        body: JSON.stringify(writeModel)
-      })
+      method: 'POST',
+      body: JSON.stringify(writeModel)
+    })
       .then(data => this.onCreateSuccess(data, options))
       .catch(ex => this.onCreateFail(ex));
   }
@@ -381,9 +281,9 @@ class ContentEditPageBaseViewModel {
     }
 
     return this.api.fetch(url, {
-        method: 'PUT',
-        body: JSON.stringify(writeModel)
-      })
+      method: 'PUT',
+      body: JSON.stringify(writeModel)
+    })
       .then(data => this.onUpdateSuccess(id, data, options))
       .then(() => this.afterContentLoaded())
       .catch(ex => this.onUpdateFail(writeModel, id, ex));
@@ -452,13 +352,13 @@ class ContentEditPageBaseViewModel {
     return Promise.resolve();
   }
 
-  onUpdateSuccess(id /* , data */ ) {
+  onUpdateSuccess(id /* , data */) {
     toastr.success(this.settings.contentUpdatedMessage);
 
     return this.loadContent(id);
   }
 
-  handleSaveConflict( /* writeModel, conflictInfo */ ) {
+  handleSaveConflict( /* writeModel, conflictInfo */) {
     return Promise.resolve();
   }
 
